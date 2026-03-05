@@ -1,0 +1,301 @@
+/* ---- Reset & base ---- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:          #0d0d0d;
+  --surface:     #161616;
+  --surface-2:   #1f1f1f;
+  --border:      #2a2a2a;
+  --accent:      #00e5ff;
+  --green:       #00e676;
+  --yellow:      #ffea00;
+  --red:         #ff1744;
+  --blue:        #448aff;
+  --text:        #e0e0e0;
+  --text-muted:  #757575;
+  --font:        'Courier New', Courier, monospace;
+}
+
+html, body, #root {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+}
+
+/* ---- Shell ---- */
+.hmi-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100vh;
+}
+
+.hmi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.hmi-title {
+  font-size: 16px;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hmi-logo {
+  font-size: 20px;
+}
+
+.hmi-main {
+  display: flex;
+  flex: 1;
+  gap: 16px;
+  padding: 16px;
+  overflow: auto;
+}
+
+.hmi-left,
+.hmi-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hmi-left { flex: 0 0 260px; }
+.hmi-right { flex: 1; }
+
+/* ---- Badge ---- */
+.badge {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 3px 10px;
+  border-radius: 3px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.badge-connected { background: #003300; color: var(--green); border: 1px solid var(--green); }
+.badge-error     { background: #330000; color: var(--red);   border: 1px solid var(--red); }
+.badge-neutral   { background: #1a1a1a; color: var(--text-muted); border: 1px solid var(--border); }
+
+/* ---- Panel ---- */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 14px 16px;
+}
+
+.panel-title {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ---- Power panel ---- */
+.power-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.power-btn {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 3px solid #333;
+  background: #1a1a1a;
+  color: #555;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+  outline: none;
+}
+
+.power-btn:hover:not(:disabled) {
+  border-color: var(--green);
+  color: var(--green);
+  box-shadow: 0 0 16px rgba(0, 230, 118, 0.25);
+}
+
+.power-btn-on {
+  border-color: var(--green);
+  color: var(--green);
+  box-shadow: 0 0 20px rgba(0, 230, 118, 0.3);
+}
+
+.power-btn-on:hover:not(:disabled) {
+  border-color: var(--red);
+  color: var(--red);
+  box-shadow: 0 0 16px rgba(255, 23, 68, 0.25);
+}
+
+.power-btn-busy {
+  border-color: var(--yellow);
+  color: var(--yellow);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.power-btn:disabled {
+  cursor: not-allowed;
+}
+
+.power-icon { font-size: 32px; line-height: 1; }
+.power-label { font-size: 11px; letter-spacing: 0.1em; }
+
+.status-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ---- Indicator ---- */
+.indicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.indicator-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.dot-off     { background: #2a2a2a; }
+.dot-green   { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.dot-yellow  { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
+.dot-red     { background: var(--red); box-shadow: 0 0 6px var(--red); }
+.dot-blue    { background: var(--blue); box-shadow: 0 0 6px var(--blue); }
+
+.indicator-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+/* ---- Readout grid ---- */
+.readout-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.readout {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.readout-wide { grid-column: 1 / -1; }
+
+.readout-warn {
+  border-color: var(--yellow);
+  background: rgba(255, 234, 0, 0.04);
+}
+
+.readout-highlight {
+  border-color: var(--green);
+  background: rgba(0, 230, 118, 0.04);
+}
+
+.readout-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.readout-value {
+  font-size: 20px;
+  letter-spacing: 0.03em;
+  color: var(--text);
+}
+
+.readout-unit  { font-size: 12px; color: var(--text-muted); }
+.readout-loading { color: var(--text-muted); }
+
+/* ---- Speed setpoint ---- */
+.setpoint {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.setpoint-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.setpoint-value {
+  color: var(--accent);
+}
+
+.setpoint-slider {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.setpoint-ticks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.status-text {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  letter-spacing: 0.06em;
+  min-height: 16px;
+}
+
+/* ---- System panel ---- */
+.system-panel .readout-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* ---- Hydraulics panel ---- */
+.hydraulics-panel .readout-grid {
+  grid-template-columns: 1fr;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 680px) {
+  .hmi-main { flex-direction: column; }
+  .hmi-left { flex: none; }
+}

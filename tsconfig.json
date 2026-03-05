@@ -20,9 +20,10 @@
     "isolatedModules": true,
     "baseUrl": ".",
     "paths": {
-      "lux-react": ["./src/index.ts"]
+      "lux-react": ["./src/index.ts"],
+      "lux-opcua": ["../LuxConnect/src/index.ts"]
     }
   },
-  "include": ["src", "tests", "examples"],
+  "include": ["src", "tests", "examples", "demo"],
   "exclude": ["node_modules", "dist"]
 }
