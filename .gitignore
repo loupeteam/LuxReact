@@ -7,6 +7,9 @@ dist/
 # Test coverage
 coverage/
 
+# Claude Code temp files
+tmpclaude-*
+
 # Environment files
 .env
 .env.local
