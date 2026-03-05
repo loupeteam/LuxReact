@@ -119,12 +119,24 @@ export class LuxConnectAdapter implements ICommLayer {
     if (!this._stateListenerRegistered) {
       this._stateListenerRegistered = true;
       this._machine.onConnectionStateChanged((state) => {
-        // Both enums share the same underlying string values — cast is safe.
-        this._connectionState = state as unknown as ConnectionState;
+        // lux-opcua uses lowercase values ('connected'); lux-react uses uppercase ('CONNECTED').
+        this._connectionState = this._mapState(String(state));
         this._stateHandlers.forEach((h) => h(this._connectionState));
       });
     }
     this._stateHandlers.add(handler);
     return () => { this._stateHandlers.delete(handler); };
+  }
+
+  private _mapState(state: string): ConnectionState {
+    const map: Record<string, ConnectionState> = {
+      connected:     ConnectionState.CONNECTED,
+      connecting:    ConnectionState.CONNECTING,
+      disconnected:  ConnectionState.DISCONNECTED,
+      disconnecting: ConnectionState.DISCONNECTING,
+      reconnecting:  ConnectionState.RECONNECTING,
+      error:         ConnectionState.ERROR,
+    };
+    return map[state.toLowerCase()] ?? ConnectionState.DISCONNECTED;
   }
 }

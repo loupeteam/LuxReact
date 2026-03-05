@@ -15,7 +15,7 @@
  */
 export const connectionConfig = {
   host:     import.meta.env['VITE_OPC_HOST']     ?? 'localhost',
-  port:     Number(import.meta.env['VITE_OPC_PORT']     ?? 4840),
+  port:     Number(import.meta.env['VITE_OPC_PORT']     ?? 8000),
   protocol: (import.meta.env['VITE_OPC_PROTOCOL'] ?? 'http') as 'http' | 'https',
   username: import.meta.env['VITE_OPC_USER']     ?? '',
   password: import.meta.env['VITE_OPC_PASS']     ?? '',

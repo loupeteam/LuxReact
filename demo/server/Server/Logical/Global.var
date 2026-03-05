@@ -1,0 +1,4 @@
+
+VAR
+    HMIDemo : HMIDemo_typ;
+END_VAR

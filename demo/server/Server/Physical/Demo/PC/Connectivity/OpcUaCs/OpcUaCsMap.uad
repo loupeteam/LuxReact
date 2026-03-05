@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?AutomationStudio FileVersion="6.0"?>
+<OpcUaSource FileVersion="10">
+  <Aliases>
+    <ACLAliases />
+    <EURangeViolationAliases />
+    <EURangesAliases />
+    <EngineeringUnitAliases />
+  </Aliases>
+  <Module Name="&lt;Default&gt;">
+    <GlobalVariables Name="Global Variables">
+      <Variable Name="HMIDemo" RecursiveEnable="2" />
+    </GlobalVariables>
+    <Task Name="Program">
+      <Variable Name="tCycle" RecursiveEnable="2" />
+      <Variable Name="tHeartbeat" RecursiveEnable="2" />
+    </Task>
+  </Module>
+</OpcUaSource>

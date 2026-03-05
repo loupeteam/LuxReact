@@ -1,0 +1,9 @@
+
+VAR
+	tHeartbeat : TON;   (* 500 ms heartbeat toggle timer *)
+	tCycle     : TON;   (* 2-second cycle counter timer  *)
+END_VAR
+
+VAR CONSTANT
+
+END_VAR
