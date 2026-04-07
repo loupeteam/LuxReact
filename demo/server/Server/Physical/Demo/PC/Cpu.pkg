@@ -17,12 +17,13 @@
     <Object Type="Package">mappView</Object>
     <Object Type="Package">mappVision</Object>
     <Object Type="Package">mappCockpit</Object>
+    <Object Type="Package">mappConnect</Object>
   </Objects>
   <Configuration ModuleId="PC_any">
-    <AutomationRuntime Version="6.5.1" />
+    <AutomationRuntime Version="6.6.2" />
     <Build GccVersion="11.3.0" />
     <DefaultTargetMemory Tasks="UserROM" />
     <Transfer WaitForReconnectAfterReboot="True" />
-    <Vc FirmwareVersion="6.0.0" />
+    <Vc FirmwareVersion="6.5.0" />
   </Configuration>
 </Cpu>

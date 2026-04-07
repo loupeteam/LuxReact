@@ -175,7 +175,15 @@ export class SubscriptionManager {
             }
             entry.resolvedHandle = resolvedHandle;
           })
-          .catch(() => {
+          .catch((err) => {
+            // Log detailed diagnostics to help debug server-side errors (e.g. 507)
+            try {
+              console.error(`Subscription failed for path=\"${path}\" internalHandle=${internalHandle}`, err);
+            } catch (loggingErr) {
+              // best-effort logging
+              console.error('Subscription failed and diagnostic logging also failed', loggingErr);
+            }
+
             entry.cancelled = true;
             this._pendingSubscriptions.delete(internalHandle);
             const activeInternal = this._activeSubscriptions.get(path);

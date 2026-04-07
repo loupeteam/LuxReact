@@ -6,5 +6,6 @@
     <Object Type="File">Global.var</Object>
     <Object Type="Package" Description="Global libraries">Libraries</Object>
     <Object Type="Program" Language="IEC">Program</Object>
+    <Object Type="Package">mappConnect</Object>
   </Objects>
 </Package>
