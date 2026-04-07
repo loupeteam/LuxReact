@@ -1,7 +1,7 @@
 {
   "name": "lux-react",
   "version": "0.1.0",
-  "description": "React hooks for connecting to industrial machines (PLCs) with pluggable comm layers",
+  "description": "React hooks for connecting to industrial machines (PLCs)",
   "type": "module",
   "main": "./dist/lux-react.umd.cjs",
   "module": "./dist/lux-react.js",
