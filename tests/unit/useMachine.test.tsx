@@ -25,7 +25,7 @@ describe('useMachine', () => {
   it('returns connection state from nearest provider', async () => {
     const mock = new MockCommLayer();
     render(
-      <MachineProvider id="press1" commLayer={mock}>
+      <MachineProvider id="press1" machine={mock}>
         <MachineDisplay />
       </MachineProvider>,
     );
@@ -38,7 +38,7 @@ describe('useMachine', () => {
   it('returns machineId', async () => {
     const mock = new MockCommLayer();
     render(
-      <MachineProvider id="press1" commLayer={mock}>
+      <MachineProvider id="press1" machine={mock}>
         <MachineDisplay />
       </MachineProvider>,
     );
@@ -48,7 +48,7 @@ describe('useMachine', () => {
   it('updates when connection state changes', async () => {
     const mock = new MockCommLayer();
     render(
-      <MachineProvider id="press1" commLayer={mock}>
+      <MachineProvider id="press1" machine={mock}>
         <MachineDisplay />
       </MachineProvider>,
     );
@@ -76,8 +76,8 @@ describe('useMachine', () => {
     }
 
     render(
-      <MachineProvider id="m1" commLayer={mock1}>
-        <MachineProvider id="m2" commLayer={mock2}>
+      <MachineProvider id="m1" machine={mock1}>
+        <MachineProvider id="m2" machine={mock2}>
           <Cross />
         </MachineProvider>
       </MachineProvider>,
@@ -91,7 +91,7 @@ describe('useMachine', () => {
   it('does not expose changeUser when commLayer does not implement it', () => {
     const mock = new MockCommLayer();
     render(
-      <MachineProvider id="test-cu" commLayer={mock}>
+      <MachineProvider id="test-cu" machine={mock}>
         <MachineDisplay />
       </MachineProvider>,
     );
@@ -105,7 +105,7 @@ describe('useMachine', () => {
     mock.changeUser = vi.fn().mockResolvedValue(undefined);
 
     render(
-      <MachineProvider id="test-cu2" commLayer={mock}>
+      <MachineProvider id="test-cu2" machine={mock}>
         <MachineDisplay />
       </MachineProvider>,
     );

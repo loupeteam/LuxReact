@@ -56,11 +56,15 @@ export class MockCommLayer implements ICommLayer {
 
   subscribe(
     path: string,
-    callback: VariableChangeCallback,
-    options?: SubscribeOptions,
-  ): SubscriptionHandle {
+    callback: (value: unknown) => void,
+    options?: SubscribeOptions | number,
+  ): SubscriptionHandle | Promise<SubscriptionHandle> {
     const handle: SubscriptionHandle = this._nextHandle++;
-    this._subscriptions.set(handle, { path, callback, options: options ?? undefined });
+    this._subscriptions.set(handle, {
+      path,
+      callback: callback as VariableChangeCallback,
+      options: typeof options === 'number' ? { samplingInterval: options } : options,
+    });
 
     // Deliver cached value immediately if available
     if (this._values.has(path)) {
@@ -76,13 +80,17 @@ export class MockCommLayer implements ICommLayer {
     return handle;
   }
 
-  unsubscribe(handle: SubscriptionHandle): void {
+  unsubscribe(handle: SubscriptionHandle): void | Promise<void> {
     this._subscriptions.delete(handle);
   }
 
   onConnectionStateChanged(handler: ConnectionStateHandler): UnsubscribeFn {
     this._connectionStateHandlers.add(handler);
     return () => this._connectionStateHandlers.delete(handler);
+  }
+
+  onConnectionStateChange(handler: ConnectionStateHandler): UnsubscribeFn {
+    return this.onConnectionStateChanged(handler);
   }
 
   // --- Test helpers ---

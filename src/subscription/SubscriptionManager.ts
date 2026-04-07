@@ -21,21 +21,26 @@ import { ParentOptimizer } from './ParentOptimizer';
  * the same render cycle produce a single diff + subscribe/unsubscribe pass.
  */
 export class SubscriptionManager {
-  private _commLayer: ICommLayer;
+  private _machine: ICommLayer;
 
   private _desiredPaths = new Set<string>();
   private _registeredParents = new Map<string, 'always' | 'onDemand'>();
-  private _activeSubscriptions = new Map<string, SubscriptionHandle>();
+  private _activeSubscriptions = new Map<string, number>();
   private _callbacks = new Map<string, Set<VariableChangeCallback>>();
   private _valueCache = new Map<string, VariableChangeEvent>();
+  private _pendingSubscriptions = new Map<number, {
+    cancelled: boolean;
+    resolvedHandle: SubscriptionHandle | null;
+  }>();
+  private _nextInternalHandle = 1;
 
   /** Extra per-path options (samplingInterval, publishingInterval) stored for reconciliation. */
   private _pathOptions = new Map<string, SubscribeOptions>();
 
   private _reconcilePending = false;
 
-  constructor(commLayer: ICommLayer) {
-    this._commLayer = commLayer;
+  constructor(machine: ICommLayer) {
+    this._machine = machine;
   }
 
   // ---------------------------------------------------------------------------
@@ -110,8 +115,8 @@ export class SubscriptionManager {
    * Tear down all active subscriptions. Called by MachineProvider on unmount.
    */
   destroy(): void {
-    for (const [, handle] of this._activeSubscriptions) {
-      this._commLayer.unsubscribe(handle);
+    for (const [, internalHandle] of this._activeSubscriptions) {
+      this._unsubscribeInternal(internalHandle);
     }
     this._activeSubscriptions.clear();
     this._desiredPaths.clear();
@@ -119,6 +124,7 @@ export class SubscriptionManager {
     this._callbacks.clear();
     this._valueCache.clear();
     this._pathOptions.clear();
+    this._pendingSubscriptions.clear();
   }
 
   // ---------------------------------------------------------------------------
@@ -141,9 +147,9 @@ export class SubscriptionManager {
     );
 
     // Paths to remove — currently active but not in optimal set
-    for (const [path, handle] of this._activeSubscriptions) {
+    for (const [path, internalHandle] of this._activeSubscriptions) {
       if (!optimalPaths.has(path)) {
-        this._commLayer.unsubscribe(handle);
+        this._unsubscribeInternal(internalHandle);
         this._activeSubscriptions.delete(path);
       }
     }
@@ -151,12 +157,34 @@ export class SubscriptionManager {
     // Paths to add — in optimal set but not currently active
     for (const path of optimalPaths) {
       if (!this._activeSubscriptions.has(path)) {
-        const handle = this._commLayer.subscribe(
+        const internalHandle = this._nextInternalHandle++;
+        const entry = { cancelled: false, resolvedHandle: null as SubscriptionHandle | null };
+        this._pendingSubscriptions.set(internalHandle, entry);
+
+        const subscribeResult = this._machine.subscribe(
           path,
-          (event) => this._handleEvent(event),
-          this._pathOptions.get(path),
+          (payload) => this._handleIncoming(path, payload),
+          this._pathOptions.get(path)?.samplingInterval,
         );
-        this._activeSubscriptions.set(path, handle);
+
+        Promise.resolve(subscribeResult)
+          .then((resolvedHandle) => {
+            if (entry.cancelled) {
+              void this._machine.unsubscribe(resolvedHandle);
+              return;
+            }
+            entry.resolvedHandle = resolvedHandle;
+          })
+          .catch(() => {
+            entry.cancelled = true;
+            this._pendingSubscriptions.delete(internalHandle);
+            const activeInternal = this._activeSubscriptions.get(path);
+            if (activeInternal === internalHandle) {
+              this._activeSubscriptions.delete(path);
+            }
+          });
+
+        this._activeSubscriptions.set(path, internalHandle);
       }
     }
   }
@@ -164,6 +192,41 @@ export class SubscriptionManager {
   // ---------------------------------------------------------------------------
   // Fan-out
   // ---------------------------------------------------------------------------
+
+  private _unsubscribeInternal(internalHandle: number): void {
+    const entry = this._pendingSubscriptions.get(internalHandle);
+    if (!entry) return;
+
+    entry.cancelled = true;
+    this._pendingSubscriptions.delete(internalHandle);
+
+    if (entry.resolvedHandle !== null) {
+      void this._machine.unsubscribe(entry.resolvedHandle);
+    }
+  }
+
+  private _handleIncoming(path: string, payload: unknown): void {
+    const maybeEvent =
+      payload !== null && typeof payload === 'object'
+        ? (payload as Partial<VariableChangeEvent> & { quality?: unknown })
+        : null;
+
+    const normalizedEvent: VariableChangeEvent = {
+      path: typeof maybeEvent?.path === 'string' ? maybeEvent.path : path,
+      value: maybeEvent && 'value' in maybeEvent ? maybeEvent.value : payload,
+      timestamp:
+        maybeEvent?.timestamp instanceof Date ? maybeEvent.timestamp : new Date(),
+      quality:
+        maybeEvent?.quality === 'good' ||
+        maybeEvent?.quality === 'uncertain' ||
+        maybeEvent?.quality === 'bad' ||
+        maybeEvent?.quality === 'unknown'
+          ? maybeEvent.quality
+          : 'good',
+    };
+
+    this._handleEvent(normalizedEvent);
+  }
 
   private _handleEvent(event: VariableChangeEvent): void {
     // 1. Deliver directly to exact-path subscribers

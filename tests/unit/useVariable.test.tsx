@@ -30,7 +30,7 @@ describe('useVariable', () => {
   it('starts in loading state with no value', () => {
     const mock = new MockCommLayer();
     render(
-      <MachineProvider id="v-test1" commLayer={mock}>
+      <MachineProvider id="v-test1" machine={mock}>
         <SpeedDisplay />
       </MachineProvider>,
     );
@@ -42,7 +42,7 @@ describe('useVariable', () => {
   it('updates value and clears loading when PLC sends a value', async () => {
     const mock = new MockCommLayer();
     render(
-      <MachineProvider id="v-test2" commLayer={mock}>
+      <MachineProvider id="v-test2" machine={mock}>
         <SpeedDisplay />
       </MachineProvider>,
     );
@@ -64,7 +64,7 @@ describe('useVariable', () => {
     const writeSpy = vi.spyOn(mock, 'writeVariable');
 
     render(
-      <MachineProvider id="v-test3" commLayer={mock}>
+      <MachineProvider id="v-test3" machine={mock}>
         <SpeedDisplay />
       </MachineProvider>,
     );
@@ -83,7 +83,7 @@ describe('useVariable', () => {
     mock.setVariableValue('Motor.Speed', 100);
 
     render(
-      <MachineProvider id="v-optim" commLayer={mock}>
+      <MachineProvider id="v-optim" machine={mock}>
         <SpeedDisplay optimistic />
       </MachineProvider>,
     );
@@ -105,7 +105,7 @@ describe('useVariable', () => {
   it('resolves path through VariableScope prefix', async () => {
     const mock = new MockCommLayer();
     render(
-      <MachineProvider id="v-scope" commLayer={mock}>
+      <MachineProvider id="v-scope" machine={mock}>
         <VariableScope prefix="Motor">
           <SpeedDisplay path="Speed" />
         </VariableScope>
@@ -127,8 +127,8 @@ describe('useVariable', () => {
     const mock2 = new MockCommLayer();
 
     render(
-      <MachineProvider id="v-m1" commLayer={mock1}>
-        <MachineProvider id="v-m2" commLayer={mock2}>
+      <MachineProvider id="v-m1" machine={mock1}>
+        <MachineProvider id="v-m2" machine={mock2}>
           <SpeedDisplay machineId="v-m1" />
         </MachineProvider>
       </MachineProvider>,

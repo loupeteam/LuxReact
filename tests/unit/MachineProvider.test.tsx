@@ -41,7 +41,7 @@ describe('MachineProvider', () => {
   it('calls connect() on mount', async () => {
     const connectSpy = vi.spyOn(mock, 'connect');
     render(
-      <MachineProvider id="test" commLayer={mock}>
+      <MachineProvider id="test" machine={mock}>
         <div />
       </MachineProvider>,
     );
@@ -51,7 +51,7 @@ describe('MachineProvider', () => {
   it('calls disconnect() on unmount', async () => {
     const disconnectSpy = vi.spyOn(mock, 'disconnect');
     const { unmount } = render(
-      <MachineProvider id="test" commLayer={mock}>
+      <MachineProvider id="test" machine={mock}>
         <div />
       </MachineProvider>,
     );
@@ -64,7 +64,7 @@ describe('MachineProvider', () => {
   it('provides machineId and commLayer via context', async () => {
     let ctx: ReturnType<typeof useMachineContext> = null;
     render(
-      <MachineProvider id="test" commLayer={mock}>
+      <MachineProvider id="test" machine={mock}>
         <ContextReader onContext={(c) => { ctx = c; }} />
       </MachineProvider>,
     );
@@ -75,7 +75,7 @@ describe('MachineProvider', () => {
   it('updates connectionState in context when commLayer state changes', async () => {
     let ctx: ReturnType<typeof useMachineContext> = null;
     render(
-      <MachineProvider id="test" commLayer={mock}>
+      <MachineProvider id="test" machine={mock}>
         <ContextReader onContext={(c) => { ctx = c; }} />
       </MachineProvider>,
     );
@@ -90,7 +90,7 @@ describe('MachineProvider', () => {
   it('sets variablePrefix on VariableScopeContext', () => {
     let prefix = '';
     render(
-      <MachineProvider id="test" commLayer={mock} variablePrefix="::AsGlobalPV:">
+      <MachineProvider id="test" machine={mock} variablePrefix="::AsGlobalPV:">
         <PrefixReader onPrefix={(p) => { prefix = p; }} />
       </MachineProvider>,
     );
@@ -99,7 +99,7 @@ describe('MachineProvider', () => {
 
   it('subscribes alwaysRead paths on mount', async () => {
     render(
-      <MachineProvider id="test" commLayer={mock} alwaysRead={['Heartbeat', 'MachineStatus']}>
+      <MachineProvider id="test" machine={mock} alwaysRead={['Heartbeat', 'MachineStatus']}>
         <div />
       </MachineProvider>,
     );
@@ -111,7 +111,7 @@ describe('MachineProvider', () => {
 
   it('reconciles alwaysRead updates without dropping unchanged paths', async () => {
     const { rerender } = render(
-      <MachineProvider id="test" commLayer={mock} alwaysRead={['Heartbeat', 'MachineStatus']}>
+      <MachineProvider id="test" machine={mock} alwaysRead={['Heartbeat', 'MachineStatus']}>
         <div />
       </MachineProvider>,
     );
@@ -122,7 +122,7 @@ describe('MachineProvider', () => {
     );
 
     rerender(
-      <MachineProvider id="test" commLayer={mock} alwaysRead={['Heartbeat', 'AlarmState']}>
+      <MachineProvider id="test" machine={mock} alwaysRead={['Heartbeat', 'AlarmState']}>
         <div />
       </MachineProvider>,
     );
@@ -136,7 +136,7 @@ describe('MachineProvider', () => {
 
   it('registers with MachineRegistry', () => {
     render(
-      <MachineProvider id="machine1" commLayer={mock}>
+      <MachineProvider id="machine1" machine={mock}>
         <div />
       </MachineProvider>,
     );
@@ -146,7 +146,7 @@ describe('MachineProvider', () => {
 
   it('unregisters from MachineRegistry on unmount', async () => {
     const { unmount } = render(
-      <MachineProvider id="machine1" commLayer={mock}>
+      <MachineProvider id="machine1" machine={mock}>
         <div />
       </MachineProvider>,
     );

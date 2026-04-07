@@ -49,8 +49,8 @@ describe('MultiProvider integration', () => {
     const mock2 = new MockCommLayer();
 
     render(
-      <MachineProvider id="mp1" commLayer={mock1}>
-        <MachineProvider id="mp2" commLayer={mock2}>
+      <MachineProvider id="mp1" machine={mock1}>
+        <MachineProvider id="mp2" machine={mock2}>
           <div>
             {/* nearest to SpeedDisplay is mp2 */}
             <SpeedDisplay />
@@ -80,8 +80,8 @@ describe('MultiProvider integration', () => {
     const mock2 = new MockCommLayer();
 
     render(
-      <MachineProvider id="cmp1" commLayer={mock1}>
-        <MachineProvider id="cmp2" commLayer={mock2}>
+      <MachineProvider id="cmp1" machine={mock1}>
+        <MachineProvider id="cmp2" machine={mock2}>
           <ComparisonView />
         </MachineProvider>
       </MachineProvider>,
@@ -106,8 +106,8 @@ describe('MultiProvider integration', () => {
     const mock2 = new MockCommLayer();
 
     render(
-      <MachineProvider id="mp-opt1" commLayer={mock1}>
-        <MachineProvider id="mp-opt2" commLayer={mock2}>
+      <MachineProvider id="mp-opt1" machine={mock1}>
+        <MachineProvider id="mp-opt2" machine={mock2}>
           <MotorPanel machineId="mp-opt1" />
         </MachineProvider>
       </MachineProvider>,

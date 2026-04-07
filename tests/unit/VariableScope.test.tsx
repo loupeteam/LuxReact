@@ -52,7 +52,7 @@ describe('VariableScope', () => {
     let captured = '';
     const mock = new MockCommLayer();
     render(
-      <MachineProvider id="test-scope" commLayer={mock} variablePrefix="::AsGlobalPV:">
+      <MachineProvider id="test-scope" machine={mock} variablePrefix="::AsGlobalPV:">
         <VariableScope prefix="Motor">
           <PrefixCapture onCapture={(p) => { captured = p; }} />
         </VariableScope>

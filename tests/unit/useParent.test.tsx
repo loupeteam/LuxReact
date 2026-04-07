@@ -40,7 +40,7 @@ describe('useParent', () => {
     it('subscribes parent path even with no child hooks', async () => {
       const mock = new MockCommLayer();
       render(
-        <MachineProvider id="p-always1" commLayer={mock}>
+        <MachineProvider id="p-always1" machine={mock}>
           <ParentPanel mode="always" showChild={false} />
         </MachineProvider>,
       );
@@ -53,7 +53,7 @@ describe('useParent', () => {
     it('unsubscribes parent when component unmounts', async () => {
       const mock = new MockCommLayer();
       const { unmount } = render(
-        <MachineProvider id="p-always2" commLayer={mock}>
+        <MachineProvider id="p-always2" machine={mock}>
           <ParentPanel mode="always" showChild={false} />
         </MachineProvider>,
       );
@@ -71,7 +71,7 @@ describe('useParent', () => {
     it('subscribes parent when a child is mounted', async () => {
       const mock = new MockCommLayer();
       render(
-        <MachineProvider id="p-od1" commLayer={mock}>
+        <MachineProvider id="p-od1" machine={mock}>
           <ParentPanel mode="onDemand" showChild={true} />
         </MachineProvider>,
       );
@@ -85,7 +85,7 @@ describe('useParent', () => {
     it('does not subscribe parent when no child is mounted', async () => {
       const mock = new MockCommLayer();
       render(
-        <MachineProvider id="p-od2" commLayer={mock}>
+        <MachineProvider id="p-od2" machine={mock}>
           <ParentPanel mode="onDemand" showChild={false} />
         </MachineProvider>,
       );
@@ -98,7 +98,7 @@ describe('useParent', () => {
     it('unsubscribes parent when last child unmounts', async () => {
       const mock = new MockCommLayer();
       render(
-        <MachineProvider id="p-od3" commLayer={mock}>
+        <MachineProvider id="p-od3" machine={mock}>
           <ToggleParent mode="onDemand" />
         </MachineProvider>,
       );
@@ -118,7 +118,7 @@ describe('useParent', () => {
     it('fan-out delivers child values to useVariable hooks', async () => {
       const mock = new MockCommLayer();
       render(
-        <MachineProvider id="p-fanout" commLayer={mock}>
+        <MachineProvider id="p-fanout" machine={mock}>
           <ParentPanel mode="onDemand" showChild={true} />
         </MachineProvider>,
       );

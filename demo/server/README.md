@@ -44,7 +44,7 @@ Logical/
 | `Heartbeat` | `BOOL` | PLC → HMI | Toggled every 500 ms |
 | `Cycles` | `UDINT` | PLC → HMI | Incremented every 2 s while running |
 
-OPC UA paths are relative to your project's default namespace and task — configure these in `demo/gui/LuxConnectAdapter.ts` via `OpcuaMachine` if needed.
+OPC UA paths are relative to your project's default namespace and task — configure these in `demo/gui/config.ts` for the injected `OpcuaMachine` connection.
 
 ## CYCLIC logic summary
 

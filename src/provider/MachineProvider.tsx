@@ -7,10 +7,11 @@ import { SubscriptionManager } from '../subscription/SubscriptionManager';
 import type { ICommLayer } from '../types/ICommLayer';
 import type { ConnectionState } from '../types/ConnectionState';
 import type { ReadGroupConfig, VariableChangeCallback } from '../types/VariableTypes';
+import { ConnectionState as ConnectionStateEnum } from '../types/ConnectionState';
 
 export interface MachineProviderProps {
   id: string;
-  commLayer: ICommLayer;
+  machine: ICommLayer;
   alwaysRead?: string[];
   readGroups?: ReadGroupConfig[];
   variablePrefix?: string;
@@ -28,19 +29,19 @@ export interface MachineProviderProps {
  */
 export function MachineProvider({
   id,
-  commLayer,
+  machine,
   alwaysRead,
   variablePrefix = '',
   children,
 }: MachineProviderProps): React.JSX.Element {
   const [connectionState, setConnectionState] = useState<ConnectionState>(
-    commLayer.connectionState,
+    normalizeConnectionState(machine.connectionState),
   );
 
-  // Stable SubscriptionManager — recreated only when commLayer changes
+  // Stable SubscriptionManager — recreated only when machine changes
   const smRef = useRef<SubscriptionManager | null>(null);
   if (smRef.current === null) {
-    smRef.current = new SubscriptionManager(commLayer);
+    smRef.current = new SubscriptionManager(machine);
   }
   const subscriptionManager = smRef.current;
 
@@ -48,7 +49,7 @@ export function MachineProvider({
   const contextValue: MachineContextValue = {
     machineId: id,
     connectionState,
-    commLayer,
+    commLayer: machine,
     subscriptionManager,
   };
 
@@ -65,10 +66,10 @@ export function MachineProvider({
     MachineRegistry.updateMachine(id, {
       machineId: id,
       connectionState,
-      commLayer,
+      commLayer: machine,
       subscriptionManager,
     });
-  }, [id, connectionState, commLayer, subscriptionManager]);
+  }, [id, connectionState, machine, subscriptionManager]);
 
   // Unregister on unmount (or id change → re-register)
   useEffect(() => {
@@ -81,21 +82,33 @@ export function MachineProvider({
 
   // Connection lifecycle
   useEffect(() => {
-    const unsubState = commLayer.onConnectionStateChanged((state) => {
-      setConnectionState(state);
-    });
+    const onState = (state: ConnectionState | string) => {
+      setConnectionState(normalizeConnectionState(state));
+    };
 
-    commLayer.connect().catch(() => {
+    const unsubFromChanged = machine.onConnectionStateChanged?.(onState);
+    const unsubFromChange =
+      unsubFromChanged === undefined
+        ? machine.onConnectionStateChange?.(onState)
+        : undefined;
+    const unsubState =
+      typeof unsubFromChanged === 'function'
+        ? unsubFromChanged
+        : typeof unsubFromChange === 'function'
+          ? unsubFromChange
+          : () => {};
+
+    machine.connect().catch(() => {
       // Connection errors are surfaced via connectionState (→ ERROR)
     });
 
     return () => {
       unsubState();
-      commLayer.disconnect().catch(() => {});
+      machine.disconnect().catch(() => {});
       subscriptionManager.destroy();
     };
-  // commLayer is intentionally not in deps — it's treated as stable for the
-  // provider lifetime.  If a new commLayer is passed, remount the provider.
+  // machine is intentionally not in deps — it's treated as stable for the
+  // provider lifetime. If a new machine is passed, remount the provider.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -139,4 +152,17 @@ export function MachineProvider({
       </VariableScopeContext.Provider>
     </MachineContext.Provider>
   );
+}
+
+function normalizeConnectionState(state: ConnectionState | string): ConnectionState {
+  if (typeof state !== 'string') return state;
+
+  const normalized = state.toUpperCase();
+  if (normalized === ConnectionStateEnum.CONNECTED) return ConnectionStateEnum.CONNECTED;
+  if (normalized === ConnectionStateEnum.CONNECTING) return ConnectionStateEnum.CONNECTING;
+  if (normalized === ConnectionStateEnum.DISCONNECTED) return ConnectionStateEnum.DISCONNECTED;
+  if (normalized === ConnectionStateEnum.DISCONNECTING) return ConnectionStateEnum.DISCONNECTING;
+  if (normalized === ConnectionStateEnum.RECONNECTING) return ConnectionStateEnum.RECONNECTING;
+  if (normalized === ConnectionStateEnum.ERROR) return ConnectionStateEnum.ERROR;
+  return ConnectionStateEnum.DISCONNECTED;
 }

@@ -1,37 +1,49 @@
 import type { ConnectionState } from './ConnectionState';
 import type {
-  SubscriptionHandle,
-  UnsubscribeFn,
-  VariableChangeCallback,
-  ConnectionStateHandler,
-  SubscribeOptions,
+	SubscriptionHandle,
+	UnsubscribeFn,
+	SubscribeOptions,
 } from './VariableTypes';
 
+/**
+ * Generic communication contract for LuxReact.
+ *
+ * This shape is intentionally compatible with OpcuaMachine-style APIs while
+ * remaining transport-agnostic for other communication libraries.
+ */
 export interface ICommLayer {
-  readonly connectionState: ConnectionState;
+	readonly connectionState: ConnectionState | string;
 
-  connect(): Promise<void>;
-  disconnect(): Promise<void>;
+	connect(): Promise<void>;
+	disconnect(): Promise<void>;
 
-  readVariable(path: string): Promise<unknown>;
-  writeVariable(path: string, value: unknown): Promise<void>;
+	readVariable(path: string): Promise<unknown>;
+	writeVariable(path: string, value: unknown): Promise<void>;
 
-  /**
-   * Subscribe to a variable. Returns a handle synchronously — the adapter handles
-   * any internal async setup. React useEffect cleanup calls unsubscribe() synchronously.
-   */
-  subscribe(
-    path: string,
-    callback: VariableChangeCallback,
-    options?: SubscribeOptions,
-  ): SubscriptionHandle;
+	/**
+	 * Supports both async and sync handle styles so direct OpcuaMachine usage and
+	 * in-memory test doubles are both compatible.
+	 */
+	subscribe(
+		path: string,
+		callback: (value: unknown) => void,
+		options?: SubscribeOptions | number,
+	): SubscriptionHandle | Promise<SubscriptionHandle>;
 
-  unsubscribe(handle: SubscriptionHandle): void;
+	unsubscribe(handle: SubscriptionHandle): void | Promise<void>;
 
-  onConnectionStateChanged(handler: ConnectionStateHandler): UnsubscribeFn;
+	/**
+	 * Accept either method spelling used by communication libraries.
+	 * Implementations may return an unsubscribe function or void.
+	 */
+	onConnectionStateChanged?(
+		handler: (state: ConnectionState | string) => void,
+	): UnsubscribeFn | void;
+	onConnectionStateChange?(
+		handler: (state: ConnectionState | string) => void,
+	): UnsubscribeFn | void;
 
-  // Optional capabilities — adapters implement only what their comm layer supports.
-  // useMachine() exposes these only when present.
-  changeUser?(username: string, password: string): Promise<void>;
-  writeMany?(values: Record<string, unknown>): Promise<void>;
+	// Optional capabilities surfaced through useMachine() when present.
+	changeUser?(username: string, password: string): Promise<void>;
+	writeMany?(values: Record<string, unknown>): Promise<void>;
 }

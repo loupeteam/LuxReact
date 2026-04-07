@@ -7,15 +7,15 @@ import {
   VariableScope,
   ConnectionState,
 } from 'lux-react';
-import { LuxConnectAdapter } from './LuxConnectAdapter';
+import { OpcuaMachine } from 'lux-opcua';
 import { connectionConfig } from './config';
 import './App.css';
 
 // ---------------------------------------------------------------------------
-// Single adapter instance — created once at module level.
+// Single machine instance — created once at module level.
 // MachineProvider calls connect() on mount and disconnect() on unmount.
 // ---------------------------------------------------------------------------
-const adapter = new LuxConnectAdapter(connectionConfig);
+const machine = new OpcuaMachine(connectionConfig);
 
 // ---------------------------------------------------------------------------
 // App root
@@ -23,7 +23,7 @@ const adapter = new LuxConnectAdapter(connectionConfig);
 
 export function App() {
   return (
-    <MachineProvider id="press1" commLayer={adapter}>
+    <MachineProvider id="press1" machine={machine}>
       <HMIShell />
     </MachineProvider>
   );

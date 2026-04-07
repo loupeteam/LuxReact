@@ -34,7 +34,7 @@ describe('useWrite', () => {
     const writeSpy = vi.spyOn(mock, 'writeVariable');
 
     const { getByText } = render(
-      <MachineProvider id="w-test1" commLayer={mock}>
+      <MachineProvider id="w-test1" machine={mock}>
         <WriteButton path="Safety.EStop" value={true} />
       </MachineProvider>,
     );
@@ -50,7 +50,7 @@ describe('useWrite', () => {
   it('creates no subscription', async () => {
     const mock = new MockCommLayer();
     render(
-      <MachineProvider id="w-test2" commLayer={mock}>
+      <MachineProvider id="w-test2" machine={mock}>
         <WriteButton path="Safety.EStop" value={true} />
       </MachineProvider>,
     );
@@ -66,7 +66,7 @@ describe('useWrite', () => {
     const writeSpy = vi.spyOn(mock, 'writeVariable');
 
     const { getByText } = render(
-      <MachineProvider id="w-scope" commLayer={mock}>
+      <MachineProvider id="w-scope" machine={mock}>
         <VariableScope prefix="Safety">
           <WriteButton path="EStop" value={true} />
         </VariableScope>
