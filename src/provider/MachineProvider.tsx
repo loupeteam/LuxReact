@@ -6,7 +6,7 @@ import type { MachineContextValue } from '../registry/MachineRegistry';
 import { SubscriptionManager } from '../subscription/SubscriptionManager';
 import type { ICommLayer } from '../types/ICommLayer';
 import type { ConnectionState } from '../types/ConnectionState';
-import type { ReadGroupConfig } from '../types/VariableTypes';
+import type { ReadGroupConfig, VariableChangeCallback } from '../types/VariableTypes';
 
 export interface MachineProviderProps {
   id: string;
@@ -51,8 +51,6 @@ export function MachineProvider({
     commLayer,
     subscriptionManager,
   };
-  const contextValueRef = useRef<MachineContextValue>(contextValue);
-  contextValueRef.current = contextValue;
 
   // Register synchronously on first render so children can look up this machine
   // by id immediately (React renders parent before children).
@@ -62,10 +60,15 @@ export function MachineProvider({
     MachineRegistry.registerMachine(id, contextValue);
   }
 
-  // Keep registry in sync when connectionState or id changes
+  // Keep registry in sync only when registry-visible values actually change.
   useLayoutEffect(() => {
-    MachineRegistry.updateMachine(id, contextValueRef.current);
-  });
+    MachineRegistry.updateMachine(id, {
+      machineId: id,
+      connectionState,
+      commLayer,
+      subscriptionManager,
+    });
+  }, [id, connectionState, commLayer, subscriptionManager]);
 
   // Unregister on unmount (or id change → re-register)
   useEffect(() => {
@@ -96,34 +99,38 @@ export function MachineProvider({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // alwaysRead subscriptions — noop callbacks; kept alive for value cache
-  const alwaysReadRef = useRef<string[]>([]);
+  // alwaysRead subscriptions — stable callback identity and explicit set reconciliation
+  const alwaysReadCallbackRef = useRef<VariableChangeCallback>(() => {});
+  const alwaysReadRef = useRef<Set<string>>(new Set());
   useEffect(() => {
-    const noop = () => {};
-    const paths = alwaysRead ?? [];
+    const callback = alwaysReadCallbackRef.current;
+    const nextPaths = new Set(alwaysRead ?? []);
+    const prevPaths = alwaysReadRef.current;
 
-    // Remove old paths
-    for (const path of alwaysReadRef.current) {
-      if (!paths.includes(path)) {
-        subscriptionManager.removeDesired(path, noop);
+    for (const path of prevPaths) {
+      if (!nextPaths.has(path)) {
+        subscriptionManager.removeDesired(path, callback);
       }
     }
-    // Add new paths
-    for (const path of paths) {
-      if (!alwaysReadRef.current.includes(path)) {
-        subscriptionManager.addDesired(path, noop);
+
+    for (const path of nextPaths) {
+      if (!prevPaths.has(path)) {
+        subscriptionManager.addDesired(path, callback);
       }
     }
-    alwaysReadRef.current = paths;
 
+    alwaysReadRef.current = nextPaths;
+  }, [alwaysRead, subscriptionManager]);
+
+  // Remove currently tracked alwaysRead paths on unmount.
+  useEffect(() => {
     return () => {
-      for (const path of paths) {
-        subscriptionManager.removeDesired(path, noop);
+      const callback = alwaysReadCallbackRef.current;
+      for (const path of alwaysReadRef.current) {
+        subscriptionManager.removeDesired(path, callback);
       }
     };
-    // Re-run when alwaysRead array identity or length changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [alwaysRead?.join(',')]);
+  }, [subscriptionManager]);
 
   return (
     <MachineContext.Provider value={contextValue}>

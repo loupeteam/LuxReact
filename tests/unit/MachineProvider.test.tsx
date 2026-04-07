@@ -109,6 +109,31 @@ describe('MachineProvider', () => {
     );
   });
 
+  it('reconciles alwaysRead updates without dropping unchanged paths', async () => {
+    const { rerender } = render(
+      <MachineProvider id="test" commLayer={mock} alwaysRead={['Heartbeat', 'MachineStatus']}>
+        <div />
+      </MachineProvider>,
+    );
+
+    await act(async () => {});
+    expect(mock.getSubscribedPaths()).toEqual(
+      expect.arrayContaining(['Heartbeat', 'MachineStatus']),
+    );
+
+    rerender(
+      <MachineProvider id="test" commLayer={mock} alwaysRead={['Heartbeat', 'AlarmState']}>
+        <div />
+      </MachineProvider>,
+    );
+
+    await act(async () => {});
+    expect(mock.getSubscribedPaths()).toEqual(
+      expect.arrayContaining(['Heartbeat', 'AlarmState']),
+    );
+    expect(mock.getSubscribedPaths()).not.toContain('MachineStatus');
+  });
+
   it('registers with MachineRegistry', () => {
     render(
       <MachineProvider id="machine1" commLayer={mock}>

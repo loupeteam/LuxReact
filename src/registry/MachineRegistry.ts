@@ -27,6 +27,10 @@ class MachineRegistryImpl {
   private _listeners = new Map<string, Set<MachineListener>>();
 
   registerMachine(id: string, value: MachineContextValue): void {
+    const existing = this._machines.get(id);
+    if (existing && this._isSameMachineValue(existing, value)) {
+      return;
+    }
     this._machines.set(id, value);
     this._notify(id);
   }
@@ -34,11 +38,22 @@ class MachineRegistryImpl {
   updateMachine(id: string, partial: Partial<MachineContextValue>): void {
     const existing = this._machines.get(id);
     if (!existing) return;
-    this._machines.set(id, { ...existing, ...partial });
+
+    const next: MachineContextValue = {
+      ...existing,
+      ...partial,
+    };
+
+    if (this._isSameMachineValue(existing, next)) {
+      return;
+    }
+
+    this._machines.set(id, next);
     this._notify(id);
   }
 
   unregisterMachine(id: string): void {
+    if (!this._machines.has(id)) return;
     this._machines.delete(id);
     this._notify(id);
   }
@@ -68,6 +83,15 @@ class MachineRegistryImpl {
         listener();
       }
     }
+  }
+
+  private _isSameMachineValue(a: MachineContextValue, b: MachineContextValue): boolean {
+    return (
+      a.machineId === b.machineId &&
+      a.connectionState === b.connectionState &&
+      a.commLayer === b.commLayer &&
+      a.subscriptionManager === b.subscriptionManager
+    );
   }
 }
 
