@@ -495,8 +495,104 @@ body,
 }
 
 /* ==========================================================================
-   Settings Page
+   Motor Controls Card
    ========================================================================== */
+
+.controls-card {
+  grid-column: 1 / -1;
+}
+
+.controls-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.control-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.control-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* -- Momentary button -- */
+.momentary-btn {
+  padding: 12px 24px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.05s, border-color 0.05s, color 0.05s;
+  touch-action: none;
+}
+
+.momentary-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.momentary-btn--active {
+  background: var(--accent, #2563eb);
+  border-color: var(--accent, #2563eb);
+  color: #fff;
+}
+
+/* -- Hold-to-confirm button -- */
+.hold-btn {
+  position: relative;
+  padding: 12px 24px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.hold-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Progress fill sweeps via keyframe; duration is set as --hold-duration on the element */
+@keyframes hold-fill {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
+.hold-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 0%;
+  background: var(--accent, #2563eb);
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.hold-btn--holding {
+  border-color: var(--accent, #2563eb);
+}
+
+.hold-btn--holding::before {
+  animation: hold-fill var(--hold-duration, 1500ms) linear forwards;
+}
+
 
 .settings-grid {
   display: grid;

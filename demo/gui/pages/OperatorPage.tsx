@@ -1,7 +1,9 @@
-import { useVariable, useWrite, useParent, VariableScope } from 'lux-react';
+import { useVariable, useParent, VariableScope } from 'lux-react';
 import { Readout } from '../components/Readout';
 import { Indicator } from '../components/Indicator';
 import { PageHeader } from '../components/PageHeader';
+import { MomentaryButton } from '../components/MomentaryButton';
+import { HoldToConfirm } from '../components/HoldToConfirm';
 
 export function OperatorPage() {
   useParent('HMIDemo', { mode: 'onDemand' });
@@ -21,6 +23,10 @@ export function OperatorPage() {
 
       <VariableScope prefix="HMIDemo">
         <SetpointSlider />
+      </VariableScope>
+
+      <VariableScope prefix="HMIDemo">
+        <MotorControls />
       </VariableScope>
     </div>
   );
@@ -159,6 +165,30 @@ function SetpointSlider() {
         <span>1500</span>
         <span>2250</span>
         <span>3000</span>
+      </div>
+    </div>
+  );
+}
+
+// ---- Motor jog + cycle reset --------------------------------------
+
+function MotorControls() {
+  return (
+    <div className="card controls-card">
+      <h2 className="card-title">Controls</h2>
+      <div className="controls-row">
+        <div className="control-item">
+          <span className="control-label">Jog Forward</span>
+          <MomentaryButton path="JogForward">▶ Hold to Jog</MomentaryButton>
+        </div>
+        <div className="control-item">
+          <span className="control-label">Jog Reverse</span>
+          <MomentaryButton path="JogReverse">◀ Hold to Jog</MomentaryButton>
+        </div>
+        <div className="control-item">
+          <span className="control-label">Reset Cycles</span>
+          <HoldToConfirm path="ResetCycles" holdMs={1000}>⟳ Hold to Reset</HoldToConfirm>
+        </div>
       </div>
     </div>
   );
