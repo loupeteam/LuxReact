@@ -21,7 +21,7 @@ export function MomentaryButton({
   machineId,
   disabled,
 }: MomentaryButtonProps) {
-  const { pressed, handlers } = useMomentary(path, { machineId });
+  const { pressed, handlers } = useMomentary(path, machineId ? { machineId } : undefined);
 
   return (
     <button

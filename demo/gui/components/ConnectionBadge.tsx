@@ -1,7 +1,7 @@
 import { useMachine, ConnectionState } from 'lux-react';
 
 export function ConnectionBadge() {
-  const { connectionState, changeUser } = useMachine();
+  const { connectionState } = useMachine();
 
   const label =
     connectionState === ConnectionState.CONNECTED
@@ -23,16 +23,6 @@ export function ConnectionBadge() {
     <div className={cls}>
       <span className="badge-dot" />
       {label}
-        {changeUser && (
-            <>
-            <button className="badge-button" onClick={() => changeUser!('view', '1')}>
-                Log out
-            </button>
-            <button className="badge-button" onClick={() => changeUser!('dev', 'dev')}>
-                Log in
-            </button>
-            </>
-        )}
     </div>
   );
 }
