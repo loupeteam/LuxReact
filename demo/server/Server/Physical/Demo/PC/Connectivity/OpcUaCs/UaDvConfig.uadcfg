@@ -7,15 +7,18 @@
       <Property ID="ExportTypeInformation" Value="1" />
       <Property ID="DedicatedTypeDefinitionsForStructures" Value="1" />
     </Group>
+    <Group ID="AdditionalNamespaceUris">
+      <Property ID="NsUri0" Value="um:B&amp;R/server/" />
+    </Group>
     <Group ID="DefaultRolePermissions">
       <Group ID="Role [1]">
         <Property ID="Name" Value="OpcuaRole" />
         <Group ID="RolePermissions">
-          <Property ID="PermissionBrowse" Value="1" />
-          <Property ID="PermissionRead" Value="1" />
-          <Property ID="PermissionWrite" Value="1" />
-          <Property ID="PermissionCall" Value="1" />
-          <Property ID="PermissionReadRolePermissions" Value="1" />
+          <Property ID="PermissionBrowse" Value="0" />
+          <Property ID="PermissionRead" Value="0" />
+          <Property ID="PermissionWrite" Value="0" />
+          <Property ID="PermissionCall" Value="0" />
+          <Property ID="PermissionReadRolePermissions" Value="0" />
           <Property ID="PermissionWriteRolePermissions" Value="0" />
           <Property ID="PermissionWriteAttribute" Value="0" />
           <Property ID="PermissionReadHistory" Value="0" />

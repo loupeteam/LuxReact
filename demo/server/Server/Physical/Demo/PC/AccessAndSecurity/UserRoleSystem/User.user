@@ -2,10 +2,15 @@
 <?AutomationStudio FileVersion="4.9"?>
 <Configuration>
   <Element ID="dev" Type="User">
-    <Property ID="Password" Value="$argon2id$v=19$m=512,t=70,p=1$+bRswzbuhb6m$fDzsDLrVj0MyNyf30GW/OZBxwHkUzH4N6dv9LlyguuQ" />
+    <Property ID="Password" Value="$argon2id$v=19$m=512,t=70,p=1$+bRswzbuhb6m$fDzsDLrVj0MyNyf30GW/OZBxwHkUzH4N6dv9LlyguuQ" Description="dev" />
     <Group ID="Roles">
       <Property ID="Role[1]" Value="BR_Engineer" />
-      <Property ID="Role[2]" Value="OpcuaRole" />
+    </Group>
+  </Element>
+  <Element ID="view" Type="User">
+    <Property ID="Password" Value="$argon2id$v=19$m=512,t=70,p=1$8TA7Ol4hkzlF$cX0qhL617gM/HE6ufCbzSMA67YtSuiW2llOioiOPPTM" Description="1" />
+    <Group ID="Roles">
+      <Property ID="Role[1]" Value="BR_Observer" />
     </Group>
   </Element>
 </Configuration>

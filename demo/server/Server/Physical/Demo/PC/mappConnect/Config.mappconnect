@@ -11,7 +11,8 @@
       <Group ID="Endpoint[1]">
         <Property ID="Endpoint" Value="/*" />
         <Group ID="Roles">
-          <Property ID="Role[1]" Value="OpcuaRole" />
+          <Property ID="Role[1]" Value="BR_Anonymous" />
+          <Property ID="Role[2]" Value="BR_Engineer" />
         </Group>
       </Group>
     </Group>

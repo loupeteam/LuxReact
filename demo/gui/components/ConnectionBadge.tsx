@@ -25,7 +25,7 @@ export function ConnectionBadge() {
       {label}
         {changeUser && (
             <>
-            <button className="badge-button" onClick={() => changeUser!('anonymous', '')}>
+            <button className="badge-button" onClick={() => changeUser!('view', '1')}>
                 Log out
             </button>
             <button className="badge-button" onClick={() => changeUser!('dev', 'dev')}>

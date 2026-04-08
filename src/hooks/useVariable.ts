@@ -90,14 +90,21 @@ export function useVariable<T = unknown>(
       try {
         await context.commLayer.writeVariable(resolvedPath, newValue);
       } catch (err) {
-        if (options?.optimistic) {
-          // Revert to pre-write value on failure
-          setValue(preOptimisticValue);
-          setMeta(prev => ({
-            ...prev,
-            error: err instanceof Error ? err : new Error(String(err)),
-          }));
+        // Read the actual server value so the UI reflects the true PLC state
+        // regardless of whether we were in optimistic mode or not.
+        try {
+          const actual = await context.commLayer.readVariable(resolvedPath);
+          setValue(actual as T);
+        } catch {
+          // Read failed too (e.g. disconnected) — fall back to pre-write snapshot
+          if (options?.optimistic) {
+            setValue(preOptimisticValue);
+          }
         }
+        setMeta(prev => ({
+          ...prev,
+          error: err instanceof Error ? err : new Error(String(err)),
+        }));
         throw err;
       }
     },

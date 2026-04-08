@@ -1,5 +1,6 @@
 import { useVariable, useWrite, VariableScope } from 'lux-react';
 import { PageHeader } from '../components/PageHeader';
+import { CommitInput } from '../components/CommitInput';
 
 export function RecipePage() {
   const [loadedIndex] = useVariable<number>('HMIDemo.Recipes.LoadedIndex', {
@@ -56,27 +57,18 @@ function RecipeCardContent({
   isLoaded: boolean;
   onLoad: () => void;
 }) {
-  const [name, setName] = useVariable<string>('Name', {
-    defaultValue: '',
-    optimistic: true,
-  });
-  const [setpoint, setSetpoint] = useVariable<number>('Setpoint', {
-    defaultValue: 0,
-    optimistic: true,
-  });
-  const [pressureTarget, setPressureTarget] = useVariable<number>('PressureTarget', {
-    defaultValue: 0,
-    optimistic: true,
-  });
+  const [name, setName] = useVariable<string>('Name', { defaultValue: '' });
+  const [setpoint, setSetpoint] = useVariable<number>('Setpoint', { defaultValue: 0 });
+  const [pressureTarget, setPressureTarget] = useVariable<number>('PressureTarget', { defaultValue: 0 });
 
   return (
     <div className={`card recipe-card${isLoaded ? ' recipe-card--active' : ''}`}>
       <div className="recipe-header">
-        <input
+        <CommitInput
           className="recipe-name-input"
           type="text"
           value={name ?? ''}
-          onChange={(e) => void setName(e.target.value)}
+          onCommit={(v) => void setName(v)}
           placeholder="Recipe name"
           aria-label="Recipe Name"
         />
@@ -86,11 +78,11 @@ function RecipeCardContent({
         <div className="recipe-param">
           <span className="recipe-param-label">Speed</span>
           <div className="recipe-param-input-wrap">
-            <input
+            <CommitInput
               className="recipe-param-input"
               type="number"
               value={setpoint ?? 0}
-              onChange={(e) => void setSetpoint(Number(e.target.value) || 0)}
+              onCommit={(v) => void setSetpoint(Number(v) || 0)}
               step={10}
               min={0}
               aria-label="Recipe Speed"
@@ -101,11 +93,11 @@ function RecipeCardContent({
         <div className="recipe-param">
           <span className="recipe-param-label">Pressure</span>
           <div className="recipe-param-input-wrap">
-            <input
+            <CommitInput
               className="recipe-param-input"
               type="number"
               value={pressureTarget ?? 0}
-              onChange={(e) => void setPressureTarget(Number(e.target.value) || 0)}
+              onCommit={(v) => void setPressureTarget(Number(v) || 0)}
               step={1}
               min={0}
               aria-label="Recipe Pressure"

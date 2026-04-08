@@ -26,6 +26,120 @@ function SpeedDisplay({
   );
 }
 
+function SpeedDisplayWithError({
+  path = 'Motor.Speed',
+  optimistic,
+}: {
+  path?: string;
+  optimistic?: boolean;
+}) {
+  const [value, setValue, meta] = useVariable<number>(path, { optimistic });
+  return (
+    <div>
+      <span data-testid="value">{value ?? 'undef'}</span>
+      <span data-testid="error">{meta.error?.message ?? 'null'}</span>
+      <button onClick={() => setValue(9999).catch(() => {})}>set</button>
+    </div>
+  );
+}
+
+describe('useVariable write failure', () => {
+  it('reads actual value from server after a failed write (non-optimistic)', async () => {
+    const mock = new MockCommLayer();
+    mock.setVariableValue('Motor.Speed', 42);
+    vi.spyOn(mock, 'writeVariable').mockRejectedValue(new Error('read-only'));
+    const readSpy = vi.spyOn(mock, 'readVariable');
+
+    render(
+      <MachineProvider id="v-fail-nonopt" machine={mock}>
+        <SpeedDisplayWithError />
+      </MachineProvider>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('value').textContent).toBe('42'),
+    );
+
+    await act(async () => {
+      screen.getByText('set').click();
+    });
+
+    // readVariable should have been called to fetch the authoritative value
+    expect(readSpy).toHaveBeenCalledWith('Motor.Speed');
+
+    // Error should be surfaced in meta
+    await waitFor(() =>
+      expect(screen.getByTestId('error').textContent).toBe('read-only'),
+    );
+
+    // Value should reflect what readVariable returned (still 42 from server)
+    expect(screen.getByTestId('value').textContent).toBe('42');
+    MachineRegistry.unregisterMachine('v-fail-nonopt');
+  });
+
+  it('reads actual value from server after a failed optimistic write', async () => {
+    const mock = new MockCommLayer();
+    mock.setVariableValue('Motor.Speed', 10);
+    vi.spyOn(mock, 'writeVariable').mockRejectedValue(new Error('permission denied'));
+    const readSpy = vi.spyOn(mock, 'readVariable');
+
+    render(
+      <MachineProvider id="v-fail-opt" machine={mock}>
+        <SpeedDisplayWithError optimistic />
+      </MachineProvider>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('value').textContent).toBe('10'),
+    );
+
+    await act(async () => {
+      screen.getByText('set').click();
+    });
+
+    // After optimistic write fails, readVariable should confirm the real value
+    expect(readSpy).toHaveBeenCalledWith('Motor.Speed');
+
+    // Value should be the server's actual value (10), not the failed write (9999)
+    await waitFor(() =>
+      expect(screen.getByTestId('value').textContent).toBe('10'),
+    );
+
+    // Error should be surfaced
+    await waitFor(() =>
+      expect(screen.getByTestId('error').textContent).toBe('permission denied'),
+    );
+    MachineRegistry.unregisterMachine('v-fail-opt');
+  });
+
+  it('falls back to pre-write snapshot when both write and read fail', async () => {
+    const mock = new MockCommLayer();
+    mock.setVariableValue('Motor.Speed', 5);
+    vi.spyOn(mock, 'writeVariable').mockRejectedValue(new Error('write failed'));
+    vi.spyOn(mock, 'readVariable').mockRejectedValue(new Error('read failed'));
+
+    render(
+      <MachineProvider id="v-fail-both" machine={mock}>
+        <SpeedDisplayWithError optimistic />
+      </MachineProvider>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('value').textContent).toBe('5'),
+    );
+
+    await act(async () => {
+      screen.getByText('set').click();
+    });
+
+    // When read also fails, reverts to pre-write snapshot (5)
+    await waitFor(() =>
+      expect(screen.getByTestId('value').textContent).toBe('5'),
+    );
+    MachineRegistry.unregisterMachine('v-fail-both');
+  });
+});
+
 describe('useVariable', () => {
   it('starts in loading state with no value', () => {
     const mock = new MockCommLayer();
