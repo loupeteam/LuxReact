@@ -56,26 +56,62 @@ function RecipeCardContent({
   isLoaded: boolean;
   onLoad: () => void;
 }) {
-  const [name] = useVariable<string>('Name', { defaultValue: '---' });
-  const [setpoint] = useVariable<number>('Setpoint', { defaultValue: 0 });
-  const [pressureTarget] = useVariable<number>('PressureTarget', {
+  const [name, setName] = useVariable<string>('Name', {
+    defaultValue: '',
+    optimistic: true,
+  });
+  const [setpoint, setSetpoint] = useVariable<number>('Setpoint', {
     defaultValue: 0,
+    optimistic: true,
+  });
+  const [pressureTarget, setPressureTarget] = useVariable<number>('PressureTarget', {
+    defaultValue: 0,
+    optimistic: true,
   });
 
   return (
     <div className={`card recipe-card${isLoaded ? ' recipe-card--active' : ''}`}>
       <div className="recipe-header">
-        <span className="recipe-name">{name ?? '---'}</span>
+        <input
+          className="recipe-name-input"
+          type="text"
+          value={name ?? ''}
+          onChange={(e) => void setName(e.target.value)}
+          placeholder="Recipe name"
+          aria-label="Recipe Name"
+        />
         {isLoaded && <span className="recipe-loaded-badge">LOADED</span>}
       </div>
       <div className="recipe-params">
         <div className="recipe-param">
           <span className="recipe-param-label">Speed</span>
-          <span className="recipe-param-value">{setpoint ?? 0} RPM</span>
+          <div className="recipe-param-input-wrap">
+            <input
+              className="recipe-param-input"
+              type="number"
+              value={setpoint ?? 0}
+              onChange={(e) => void setSetpoint(Number(e.target.value) || 0)}
+              step={10}
+              min={0}
+              aria-label="Recipe Speed"
+            />
+            <span className="recipe-param-unit">RPM</span>
+          </div>
         </div>
         <div className="recipe-param">
           <span className="recipe-param-label">Pressure</span>
-          <span className="recipe-param-value">{pressureTarget ?? 0} bar</span>
+          <div className="recipe-param-input-wrap">
+            <input
+              className="recipe-param-input"
+              type="number"
+              value={pressureTarget ?? 0}
+              onChange={(e) => void setPressureTarget(Number(e.target.value) || 0)}
+              step={1}
+              min={0}
+              aria-label="Recipe Pressure"
+            />
+            <span className="recipe-param-unit">bar</span>
+          </div>
         </div>
       </div>
       <button

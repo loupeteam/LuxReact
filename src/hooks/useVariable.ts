@@ -28,7 +28,11 @@ export function useVariable<T = unknown>(
 ): [T | undefined, (value: T) => Promise<void>, VariableMeta] {
   const context = useResolvedContext(machineId);
   const prefix = useVariablePrefix();
-  const resolvedPath = resolvePath(path, prefix);
+  // Bypass the scope when explicitly requested, or when the path is already
+  // absolute (starts with '::' for B&R PV paths or 'ns=' for OPC UA syntax).
+  const isAbsolute = path.startsWith('::') || path.startsWith('ns=');
+  const effectivePrefix = (isAbsolute || options?.ignoreScope) ? '' : prefix;
+  const resolvedPath = resolvePath(path, effectivePrefix);
 
   const [value, setValue] = useState<T | undefined>(options?.defaultValue);
   const [meta, setMeta] = useState<VariableMeta>({

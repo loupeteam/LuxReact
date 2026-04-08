@@ -122,6 +122,107 @@ describe('useVariable', () => {
     MachineRegistry.unregisterMachine('v-scope');
   });
 
+  it('stacks nested VariableScope prefixes when resolving path', async () => {
+    const mock = new MockCommLayer();
+    render(
+      <MachineProvider id="v-nest-scope" machine={mock}>
+        <VariableScope prefix="Motor">
+          <VariableScope prefix="Axis[0]">
+            <SpeedDisplay path="Pos" />
+          </VariableScope>
+        </VariableScope>
+      </MachineProvider>,
+    );
+
+    await act(async () => {
+      mock.setVariableValue('Motor.Axis[0].Pos', 77);
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('value').textContent).toBe('77'),
+    );
+    MachineRegistry.unregisterMachine('v-nest-scope');
+  });
+
+  it('ignoreScope: true bypasses the VariableScope prefix', async () => {
+    const mock = new MockCommLayer();
+
+    function AbsoluteDisplay() {
+      const [value] = useVariable<number>('Global.Speed', { ignoreScope: true });
+      return <span data-testid="value">{value ?? 'undef'}</span>;
+    }
+
+    render(
+      <MachineProvider id="v-ignore-scope" machine={mock}>
+        <VariableScope prefix="ShouldNotAppear">
+          <AbsoluteDisplay />
+        </VariableScope>
+      </MachineProvider>,
+    );
+
+    // Only the un-prefixed path should receive the value
+    await act(async () => {
+      mock.setVariableValue('Global.Speed', 55);
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('value').textContent).toBe('55'),
+    );
+    MachineRegistry.unregisterMachine('v-ignore-scope');
+  });
+
+  it('absolute path (starting with ::) bypasses the VariableScope prefix', async () => {
+    const mock = new MockCommLayer();
+
+    function AbsoluteDisplay() {
+      const [value] = useVariable<number>('::AsGlobalPV:Motor.Speed');
+      return <span data-testid="value">{value ?? 'undef'}</span>;
+    }
+
+    render(
+      <MachineProvider id="v-abs-path" machine={mock}>
+        <VariableScope prefix="ShouldNotAppear">
+          <AbsoluteDisplay />
+        </VariableScope>
+      </MachineProvider>,
+    );
+
+    await act(async () => {
+      mock.setVariableValue('::AsGlobalPV:Motor.Speed', 99);
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('value').textContent).toBe('99'),
+    );
+    MachineRegistry.unregisterMachine('v-abs-path');
+  });
+
+  it('absolute path (starting with ns=) bypasses the VariableScope prefix', async () => {
+    const mock = new MockCommLayer();
+
+    function AbsoluteDisplay() {
+      const [value] = useVariable<number>('ns=5;s=::AsGlobalPV:Motor.Speed');
+      return <span data-testid="value">{value ?? 'undef'}</span>;
+    }
+
+    render(
+      <MachineProvider id="v-ns-path" machine={mock}>
+        <VariableScope prefix="ShouldNotAppear">
+          <AbsoluteDisplay />
+        </VariableScope>
+      </MachineProvider>,
+    );
+
+    await act(async () => {
+      mock.setVariableValue('ns=5;s=::AsGlobalPV:Motor.Speed', 33);
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('value').textContent).toBe('33'),
+    );
+    MachineRegistry.unregisterMachine('v-ns-path');
+  });
+
   it('looks up machine by explicit machineId', async () => {
     const mock1 = new MockCommLayer();
     const mock2 = new MockCommLayer();

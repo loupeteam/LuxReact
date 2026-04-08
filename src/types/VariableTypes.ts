@@ -40,6 +40,12 @@ export interface VariableConfig<T = unknown> {
   publishingInterval?: number;
   /** When true, setValue() updates local state immediately; server confirmation overwrites; write failure reverts. */
   optimistic?: boolean;
+  /**
+   * When true, the nearest VariableScope prefix is NOT applied to the path.
+   * Paths that are already absolute (start with '::' or 'ns=') are also bypassed
+   * automatically without needing this flag.
+   */
+  ignoreScope?: boolean;
 }
 
 export interface ReadGroupConfig {
