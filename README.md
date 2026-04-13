@@ -240,7 +240,6 @@ Wraps a subtree with a machine connection.
 | `machine` | `ICommLayer` | Communication implementation (OpcuaMachine-compatible). Treated as stable — if you need a new machine instance, remount the provider. |
 | `alwaysRead` | `string[]` | Paths subscribed on mount and held for the provider's lifetime. |
 | `variablePrefix` | `string` | Root namespace prefix. All paths from hooks inside this provider are prepended with this value. |
-| `readGroups` | `ReadGroupConfig[]` | Named groups with `publishingInterval`/`samplingInterval` presets. |
 
 Calls `machine.connect()` on mount and `machine.disconnect()` on unmount.
 

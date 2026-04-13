@@ -18,7 +18,6 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "baseUrl": ".",
     "paths": {
       "lux-react": ["./src/index.ts"],
       "lux-opcua": ["../LuxConnect/src/index.ts"]

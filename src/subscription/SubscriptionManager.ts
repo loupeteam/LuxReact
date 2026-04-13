@@ -164,7 +164,7 @@ export class SubscriptionManager {
         const subscribeResult = this._machine.subscribe(
           path,
           (payload) => this._handleIncoming(path, payload),
-          this._pathOptions.get(path)?.samplingInterval,
+          this._pathOptions.get(path),
         );
 
         Promise.resolve(subscribeResult)

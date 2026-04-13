@@ -6,14 +6,13 @@ import type { MachineContextValue } from '../registry/MachineRegistry';
 import { SubscriptionManager } from '../subscription/SubscriptionManager';
 import type { ICommLayer } from '../types/ICommLayer';
 import type { ConnectionState } from '../types/ConnectionState';
-import type { ReadGroupConfig, VariableChangeCallback } from '../types/VariableTypes';
+import type { VariableChangeCallback } from '../types/VariableTypes';
 import { ConnectionState as ConnectionStateEnum } from '../types/ConnectionState';
 
 export interface MachineProviderProps {
   id: string;
   machine: ICommLayer;
   alwaysRead?: string[];
-  readGroups?: ReadGroupConfig[];
   variablePrefix?: string;
   children: React.ReactNode;
 }
