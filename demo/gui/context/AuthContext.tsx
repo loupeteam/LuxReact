@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useState } from 'react';
 import { useMachine } from 'lux-react';
+import { connectionConfig } from '../config';
 
 interface AuthState {
   user: string | null;
@@ -9,11 +10,6 @@ interface AuthState {
 }
 
 const AuthContext = createContext<AuthState | null>(null);
-
-// Username used for the "logged out" / view-only state.
-// Adjust to match your PLC's anonymous/view account.
-const GUEST_USER = 'view';
-const GUEST_PASS = '1';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { changeUser } = useMachine();
@@ -28,8 +24,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [changeUser]);
 
   const logout = useCallback(async () => {
-    if (changeUser) {
-      await changeUser(GUEST_USER, GUEST_PASS);
+    if (changeUser && connectionConfig.guestUsername) {
+      await changeUser(connectionConfig.guestUsername, connectionConfig.guestPassword);
     }
     setUser(null);
   }, [changeUser]);

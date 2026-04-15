@@ -18,6 +18,7 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
     "paths": {
       "lux-react": ["./src/index.ts"],
       "lux-opcua": ["../LuxConnect/src/index.ts"]

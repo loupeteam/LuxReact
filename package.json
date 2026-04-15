@@ -2,6 +2,23 @@
   "name": "lux-react",
   "version": "0.1.0",
   "description": "React hooks for connecting to industrial machines (PLCs)",
+  "license": "MIT",
+  "author": "Loupe",
+  "homepage": "https://github.com/loupeteam/LuxReact#readme",
+  "bugs": {
+    "url": "https://github.com/loupeteam/LuxReact/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/loupeteam/LuxReact.git"
+  },
+  "keywords": [
+    "react",
+    "plc",
+    "industrial",
+    "automation",
+    "opc-ua"
+  ],
   "type": "module",
   "main": "./dist/lux-react.umd.cjs",
   "module": "./dist/lux-react.js",

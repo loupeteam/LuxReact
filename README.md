@@ -6,6 +6,8 @@ React hooks for connecting to industrial machines (PLCs) with a pluggable comm l
 
 **Vitest-covered public API · zero TypeScript errors · strict mode + `exactOptionalPropertyTypes`**
 
+LuxReact is currently `0.1.0`. The public API is usable, but it is still early and may evolve before a `1.0` release.
+
 ---
 
 ## Contents
@@ -28,6 +30,7 @@ React hooks for connecting to industrial machines (PLCs) with a pluggable comm l
 - [MockCommLayer](#mockcommlayer)
 - [Multiple machines](#multiple-machines)
 - [Demo app](#demo-app)
+- [Project policies](#project-policies)
 
 ---
 
@@ -602,17 +605,24 @@ Assign `HMIDemoTask` to a CPU with **task class Cyclic, 100 ms** cycle time. See
 
 **1. Configure the connection**
 
-Create a `.env.local` file in the `LuxReact` root:
+Copy `.env.example` to `.env.local` in the repo root and fill in your target values:
 
 ```
-VITE_OPC_HOST=192.168.1.10
-VITE_OPC_PORT=80
-VITE_OPC_PROTOCOL=http
-VITE_OPC_USER=admin
-VITE_OPC_PASS=secret
+VITE_HOST=192.168.1.10
+VITE_PORT=8443
+VITE_PROTOCOL=https
+VITE_USER=<demo-username>
+VITE_PASS=<demo-password>
+VITE_GUEST_USER=<optional-view-user>
+VITE_GUEST_PASS=<optional-view-password>
+VITE_NAMESPACE=6
 ```
 
-Or edit `demo/gui/config.ts` directly.
+Do not commit `.env.local`.
+
+`VITE_GUEST_USER` and `VITE_GUEST_PASS` are optional. Set them only if your demo target requires an explicit view-only account for logout/reset-to-observer behavior.
+
+The demo Vite proxy forwards credentials with Basic Auth for local development convenience. Treat that flow as development-only. Production adapters should use the target system's real authentication model instead of copying the demo proxy approach.
 
 **2. Run**
 
@@ -627,6 +637,18 @@ The demo illustrates:
 - `<VariableScope prefix="HMIDemo">` — child components use short names (`'Speed'`) without knowing the full path
 - `useWrite<boolean>('HMIDemo.Power')` — write-only power button, no subscription
 - `optimistic: true` on the speed setpoint slider for immediate UI response
+
+The demo app and demo server are reference implementations. They are useful for learning the library and for local validation, but they should not be treated as production-ready security or deployment templates.
+
+---
+
+## Project policies
+
+- [Contributing](./CONTRIBUTING.md)
+- [Code of Conduct](./CODE_OF_CONDUCT.md)
+- [Security](./SECURITY.md)
+- [Support](./SUPPORT.md)
+- [Changelog](./CHANGELOG.md)
 
 ---
 
