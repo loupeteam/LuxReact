@@ -357,8 +357,5 @@ describe('useVariable', () => {
     await waitFor(() =>
       expect(screen.getByTestId('value').textContent).toBe('777'),
     );
-
-    MachineRegistry.unregisterMachine('v-m1');
-    MachineRegistry.unregisterMachine('v-m2');
   });
 });

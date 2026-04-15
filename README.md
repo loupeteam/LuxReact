@@ -4,7 +4,7 @@ React hooks for connecting to industrial machines (PLCs) with a pluggable comm l
 
 `lux-react` provides the React wiring — providers, hooks, subscription management, and value caching — without knowing anything about how variables are actually read from or written to the machine. You supply an adapter that implements the `ICommLayer` interface; the library handles the rest.
 
-**106 tests · zero TypeScript errors · strict mode + `exactOptionalPropertyTypes`**
+**Vitest-covered public API · zero TypeScript errors · strict mode + `exactOptionalPropertyTypes`**
 
 ---
 
@@ -18,6 +18,7 @@ React hooks for connecting to industrial machines (PLCs) with a pluggable comm l
   - [useWrite](#usewrite)
   - [useMachine](#usemachine)
   - [useParent](#useparent)
+  - [useMomentary](#usemomentary)
 - [Components](#components)
   - [MachineProvider](#machineprovider)
   - [VariableScope](#variablescope)
@@ -89,9 +90,9 @@ The `SubscriptionManager` inside each `MachineProvider` maintains a *desired set
 
 The last received value for every subscribed path is cached. When a component remounts, the cached value is delivered synchronously before the first server update arrives, preventing a flash of loading state.
 
-### Synchronous subscribe contract
+### Sync or async subscribe contract
 
-`ICommLayer.subscribe()` **must return a handle synchronously**. React's `useEffect` cleanup runs synchronously, which means `unsubscribe()` is called synchronously too. Adapters that use an async underlying subscription (like OPC UA) must bridge the gap themselves — see [Writing an adapter](#writing-an-adapter).
+`lux-react` accepts comm layers whose `subscribe()` returns either a handle immediately or a `Promise` for one. `SubscriptionManager` bridges async setup internally so direct OpcuaMachine-style adapters and synchronous test doubles both work. `unsubscribe()` may also be sync or async.
 
 ---
 
@@ -108,6 +109,15 @@ function useVariable<T = unknown>(
 ```
 
 Subscribes to a variable and returns `[value, setValue, meta]`.
+
+`VariableConfig<T>` supports:
+
+- `defaultValue` — initial value before the first update arrives.
+- `readGroupName` — forwarded to the comm layer.
+- `samplingInterval` — forwarded to the comm layer.
+- `publishingInterval` — forwarded to the comm layer.
+- `optimistic` — updates local state immediately while the write is in flight.
+- `ignoreScope` — bypasses the nearest `VariableScope` prefix for this hook call.
 
 ```tsx
 const [speed, setSpeed, meta] = useVariable<number>('Motor.Speed', {
@@ -142,6 +152,13 @@ const [speed] = useVariable<number>('Motor.Speed', {}, 'press1');
 ```
 
 Paths are resolved against any active [`VariableScope`](#variablescope) prefix.
+
+For absolute PLC / OPC UA paths, the hook automatically bypasses scope stacking when `path` starts with `::` or `ns=`. You can also opt out manually with `ignoreScope: true`.
+
+```tsx
+const [globalSpeed] = useVariable<number>('::AsGlobalPV:Motor.Speed');
+const [rawPath] = useVariable<number>('Global.Speed', { ignoreScope: true });
+```
 
 ---
 
@@ -214,6 +231,61 @@ Declares a *parent subscription optimization* for the component's lifetime. See 
 
 - **`always`** — the parent path is subscribed while this component is mounted, regardless of whether any child `useVariable` hooks are active.
 - **`onDemand`** — the parent path is subscribed only while at least one `useVariable` targeting a child path is mounted. The subscription is unsubscribed when the last child hook unmounts.
+
+---
+
+### useMomentary
+
+```typescript
+function useMomentary(
+  path: string,
+  config?: MomentaryConfig,
+): MomentaryResult
+
+interface MomentaryConfig {
+  pressValue?: unknown;
+  releaseValue?: unknown;
+  intervalMs?: number;
+  heartbeatPath?: string;
+  heartbeatValue?: unknown;
+  machineId?: string;
+}
+
+interface MomentaryResult {
+  pressed: boolean;
+  handlers: {
+    onPointerDown(e: React.PointerEvent): void;
+    onPointerUp(e: React.PointerEvent): void;
+    onPointerLeave(e: React.PointerEvent): void;
+    onPointerCancel(e: React.PointerEvent): void;
+  };
+}
+```
+
+Write-on-press, write-on-release hook for momentary PLC controls. It writes `pressValue` on pointer down and `releaseValue` on pointer up, pointer leave, pointer cancel, component unmount, and `pagehide`.
+
+```tsx
+const { pressed, handlers } = useMomentary('Motor.Jog');
+
+<button {...handlers} className={pressed ? 'active' : ''}>
+  JOG
+</button>
+```
+
+Custom values and repeating jog pulses:
+
+```tsx
+const { handlers } = useMomentary('Motor.JogSpeed', {
+  pressValue: 500,
+  releaseValue: 0,
+});
+
+const jog = useMomentary('Motor.Jog', {
+  intervalMs: 100,
+  heartbeatPath: 'Motor.JogAlive',
+  heartbeatValue: true,
+});
+```
 
 ---
 
@@ -297,7 +369,7 @@ When the `Motor` subscription fires, the `SubscriptionManager` fans the struct v
 
 ```typescript
 interface ICommLayer {
-  readonly connectionState: ConnectionState;
+  readonly connectionState: ConnectionState | string;
 
   connect():    Promise<void>;
   disconnect(): Promise<void>;
@@ -305,17 +377,27 @@ interface ICommLayer {
   readVariable(path: string): Promise<unknown>;
   writeVariable(path: string, value: unknown): Promise<void>;
 
-  // Must return a handle SYNCHRONOUSLY — React cleanup calls unsubscribe() synchronously
-  subscribe(path: string, callback: VariableChangeCallback, options?: SubscribeOptions): SubscriptionHandle;
-  unsubscribe(handle: SubscriptionHandle): void;
+  subscribe(
+    path: string,
+    callback: (value: unknown) => void,
+    options?: SubscribeOptions | number,
+  ): SubscriptionHandle | Promise<SubscriptionHandle>;
+  unsubscribe(handle: SubscriptionHandle): void | Promise<void>;
 
-  onConnectionStateChanged(handler: ConnectionStateHandler): UnsubscribeFn;
+  onConnectionStateChanged?(
+    handler: (state: ConnectionState | string) => void,
+  ): UnsubscribeFn | void;
+  onConnectionStateChange?(
+    handler: (state: ConnectionState | string) => void,
+  ): UnsubscribeFn | void;
 
   // Optional — useMachine() exposes these only when present
   changeUser?(username: string, password: string): Promise<void>;
   writeMany?(values: Record<string, unknown>): Promise<void>;
 }
 ```
+
+The subscription callback may pass either a raw value or a full event object shaped like `{ path, value, timestamp, quality }`. Raw values are normalized internally with the current time and a default quality of `'good'`.
 
 `ConnectionState` enum:
 
@@ -332,13 +414,13 @@ interface ICommLayer {
 
 ## Writing an adapter
 
-The only non-obvious constraint is that `subscribe()` must return a handle synchronously, even when the underlying subscription setup is async (e.g., OPC UA requires an async handshake before the monitored item exists).
+The main adapter concern is handling both sync and async subscription lifecycles cleanly. If your underlying library performs async setup before a monitored item exists, return a `Promise<SubscriptionHandle>` and let LuxReact's `SubscriptionManager` keep track of cancellation while the subscription is still pending.
 
-The standard bridge is a *pending-map* pattern:
+When exposing a raw adapter directly, this is the recommended pattern:
 
 ```typescript
 import type { ICommLayer, SubscriptionHandle, UnsubscribeFn,
-              VariableChangeCallback, ConnectionStateHandler, SubscribeOptions } from 'lux-react';
+              SubscribeOptions } from 'lux-react';
 import { ConnectionState } from 'lux-react';
 
 interface PendingEntry {
@@ -350,7 +432,7 @@ export class MyAdapter implements ICommLayer {
   private _nextHandle = 1;
   private _pending = new Map<number, PendingEntry>();
   private _connectionState = ConnectionState.DISCONNECTED;
-  private _stateHandlers = new Set<ConnectionStateHandler>();
+  private _stateHandlers = new Set<(state: ConnectionState | string) => void>();
 
   get connectionState() { return this._connectionState; }
 
@@ -359,22 +441,28 @@ export class MyAdapter implements ICommLayer {
   readVariable(path: string)               { return this._underlying.read(path); }
   writeVariable(path: string, value: unknown) { return this._underlying.write(path, value); }
 
-  subscribe(path: string, callback: VariableChangeCallback, options?: SubscribeOptions): SubscriptionHandle {
+  subscribe(
+    path: string,
+    callback: (value: unknown) => void,
+    options?: SubscribeOptions,
+  ): Promise<SubscriptionHandle> {
     const handle = this._nextHandle++;
     const entry: PendingEntry = { cancelled: false, resolvedHandle: null };
     this._pending.set(handle, entry);
 
-    this._underlying.subscribeAsync(path, (value) => {
+    return this._underlying.subscribeAsync(path, (value) => {
       callback({ path, value, timestamp: new Date(), quality: 'good' });
-    }).then((resolvedHandle) => {
+    }, options).then((resolvedHandle) => {
       if (entry.cancelled) {
         this._underlying.unsubscribe(resolvedHandle); // too late — clean up immediately
       } else {
         entry.resolvedHandle = resolvedHandle;
       }
-    }).catch(() => { entry.cancelled = true; });
-
-    return handle; // returned synchronously
+      return handle;
+    }).catch((err) => {
+      entry.cancelled = true;
+      throw err;
+    });
   }
 
   unsubscribe(handle: SubscriptionHandle): void {
@@ -388,7 +476,7 @@ export class MyAdapter implements ICommLayer {
     // if still pending, the .then() above handles cleanup when it resolves
   }
 
-  onConnectionStateChanged(handler: ConnectionStateHandler): UnsubscribeFn {
+  onConnectionStateChanged(handler: (state: ConnectionState | string) => void): UnsubscribeFn {
     // If your underlying library doesn't return an unsubscribe fn, maintain your own set:
     this._stateHandlers.add(handler);
     return () => this._stateHandlers.delete(handler);
@@ -414,7 +502,7 @@ mock.setVariableValue('Motor.Speed', 1200);
 mock.setVariableValue('Motor', { Speed: 1200, Temp: 45, Running: true });
 
 // Inspect what the library subscribed to
-mock.getSubscribedPaths(); // Set<string>
+mock.getSubscribedPaths(); // string[]
 
 // Inspect the last value written by the library
 mock.getLastWrittenValue('Motor.Speed'); // unknown
@@ -422,6 +510,8 @@ mock.getLastWrittenValue('Motor.Speed'); // unknown
 // Simulate a connection state change
 mock.simulateConnectionState(ConnectionState.ERROR);
 ```
+
+`MockCommLayer.subscribe()` also accepts either `SubscribeOptions` or a numeric sampling interval shorthand, mirroring the main `ICommLayer` compatibility layer.
 
 ### Testing example
 

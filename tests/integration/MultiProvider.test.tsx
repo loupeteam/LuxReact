@@ -1,10 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { render, screen, act, waitFor } from '@testing-library/react';
 import { MachineProvider } from '../../src/provider/MachineProvider';
 import { MockCommLayer } from '../../src/mock/MockCommLayer';
 import { useVariable } from '../../src/hooks/useVariable';
 import { useParent } from '../../src/hooks/useParent';
-import { MachineRegistry } from '../../src/registry/MachineRegistry';
+import { cleanup } from '@testing-library/react';
 
 // -------------------------------------------------------------------------
 // Components
@@ -44,6 +44,8 @@ function ComparisonView() {
 // -------------------------------------------------------------------------
 
 describe('MultiProvider integration', () => {
+  afterEach(() => cleanup());
+
   it('two providers do not share desired paths or values', async () => {
     const mock1 = new MockCommLayer();
     const mock2 = new MockCommLayer();
@@ -71,8 +73,6 @@ describe('MultiProvider integration', () => {
     // mock1's subscription should not have received mp2's desired path
     expect(mock1.getSubscribedPaths()).not.toContain('Motor.Speed');
 
-    MachineRegistry.unregisterMachine('mp1');
-    MachineRegistry.unregisterMachine('mp2');
   });
 
   it('cross-tree id lookup delivers correct values independently', async () => {
@@ -97,8 +97,6 @@ describe('MultiProvider integration', () => {
       expect(screen.getByTestId('speed-cmp2').textContent).toBe('400');
     });
 
-    MachineRegistry.unregisterMachine('cmp1');
-    MachineRegistry.unregisterMachine('cmp2');
   });
 
   it('useParent optimization is scoped to the correct provider', async () => {
@@ -128,7 +126,5 @@ describe('MultiProvider integration', () => {
       expect(screen.getByTestId('temp-mp-opt1').textContent).toBe('25');
     });
 
-    MachineRegistry.unregisterMachine('mp-opt1');
-    MachineRegistry.unregisterMachine('mp-opt2');
   });
 });

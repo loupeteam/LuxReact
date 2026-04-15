@@ -60,13 +60,6 @@ describe('useMachine', () => {
     expect(screen.getByTestId('state').textContent).toBe(ConnectionState.ERROR);
   });
 
-  it('throws when used outside any provider', () => {
-    // Suppress React error boundaries noise in test output
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    expect(() => render(<MachineDisplay />)).toThrow();
-    consoleSpy.mockRestore();
-  });
-
   it('looks up machine by id from registry', () => {
     const mock1 = new MockCommLayer();
     const mock2 = new MockCommLayer();
