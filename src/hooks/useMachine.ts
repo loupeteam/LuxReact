@@ -11,6 +11,7 @@ export interface MachineControls {
   // Present only if commLayer implements them:
   changeUser?: (username: string, password: string) => Promise<void>;
   writeMany?: (values: Record<string, unknown>) => Promise<void>;
+  getCurrentUser?: () => string | undefined;
 }
 
 /**
@@ -50,6 +51,10 @@ export function useMachine(machineId?: string): MachineControls {
 
   if (commLayer.writeMany) {
     controls.writeMany = (values) => commLayer.writeMany!(values);
+  }
+
+  if (commLayer.getCurrentUser) {
+    controls.getCurrentUser = () => commLayer.getCurrentUser!();
   }
 
   return controls;

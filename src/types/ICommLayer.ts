@@ -46,4 +46,6 @@ export interface ICommLayer {
 	// Optional capabilities surfaced through useMachine() when present.
 	changeUser?(username: string, password: string): Promise<void>;
 	writeMany?(values: Record<string, unknown>): Promise<void>;
+	getCurrentUser?(): string | undefined;
+	onUserChanged?(handler: (username: string | undefined) => void): UnsubscribeFn | void;
 }

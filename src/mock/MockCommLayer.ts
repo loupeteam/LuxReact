@@ -31,6 +31,8 @@ export class MockCommLayer implements ICommLayer {
   private _values = new Map<string, unknown>();
   private _writtenValues = new Map<string, unknown>();
   private _connectionStateHandlers = new Set<ConnectionStateHandler>();
+  private _currentUser: string | undefined = undefined;
+  private _userChangeHandlers = new Set<(username: string | undefined) => void>();
 
   // --- ICommLayer implementation ---
 
@@ -93,6 +95,15 @@ export class MockCommLayer implements ICommLayer {
     return this.onConnectionStateChanged(handler);
   }
 
+  getCurrentUser(): string | undefined {
+    return this._currentUser;
+  }
+
+  onUserChanged(handler: (username: string | undefined) => void): UnsubscribeFn {
+    this._userChangeHandlers.add(handler);
+    return () => this._userChangeHandlers.delete(handler);
+  }
+
   // --- Test helpers ---
 
   /**
@@ -125,6 +136,14 @@ export class MockCommLayer implements ICommLayer {
    */
   getLastWrittenValue(path: string): unknown {
     return this._writtenValues.get(path);
+  }
+
+  /**
+   * Set the mock current user (simulates a logged-in user). Fires onUserChanged handlers.
+   */
+  setCurrentUser(username: string | undefined): void {
+    this._currentUser = username;
+    for (const handler of this._userChangeHandlers) handler(username);
   }
 
   /**
