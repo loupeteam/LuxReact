@@ -125,6 +125,24 @@ export class MockCommLayer implements ICommLayer {
   }
 
   /**
+   * Fire a raw subscription event for a path. Useful for testing bad quality or null values.
+   * Unlike setVariableValue, this does NOT update the cached value.
+   */
+  fireSubscriptionEvent(path: string, event: Partial<VariableChangeEvent> & { value: unknown }): void {
+    const fullEvent: VariableChangeEvent = {
+      path,
+      timestamp: new Date(),
+      quality: 'good',
+      ...event,
+    };
+    for (const sub of this._subscriptions.values()) {
+      if (sub.path === path) {
+        sub.callback(fullEvent);
+      }
+    }
+  }
+
+  /**
    * Returns all paths currently subscribed via subscribe().
    */
   getSubscribedPaths(): string[] {

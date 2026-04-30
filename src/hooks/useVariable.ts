@@ -10,7 +10,13 @@ const DEFAULT_META: VariableMeta = {
   quality: null,
   loading: true,
   error: null,
+  invalid: false,
 };
+
+function isVariableNotFoundError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message.toLowerCase() : String(err).toLowerCase();
+  return msg.includes('not found') || msg.includes('badnodeidunknown');
+}
 
 /**
  * Subscribe to a PLC variable.
@@ -50,6 +56,7 @@ export function useVariable<T = unknown>(
       quality: event.quality,
       loading: false,
       error: null,
+      invalid: event.value === null || event.quality === 'bad',
     });
   };
 
@@ -104,6 +111,7 @@ export function useVariable<T = unknown>(
         setMeta(prev => ({
           ...prev,
           error: err instanceof Error ? err : new Error(String(err)),
+          invalid: prev.invalid || isVariableNotFoundError(err),
         }));
         throw err;
       }

@@ -359,3 +359,170 @@ describe('useVariable', () => {
     );
   });
 });
+
+function InvalidDisplay({ path = 'Motor.Speed' }: { path?: string }) {
+  const [value, setValue, meta] = useVariable<number>(path);
+  return (
+    <div>
+      <span data-testid="value">{value === null ? 'null' : (value ?? 'undef')}</span>
+      <span data-testid="invalid">{String(meta.invalid)}</span>
+      <span data-testid="error">{meta.error?.message ?? 'null'}</span>
+      <button onClick={() => setValue(9999).catch(() => {})}>set</button>
+    </div>
+  );
+}
+
+describe('useVariable invalid flag', () => {
+  it('starts as false', () => {
+    const mock = new MockCommLayer();
+    render(
+      <MachineProvider id="inv-init" machine={mock}>
+        <InvalidDisplay />
+      </MachineProvider>,
+    );
+    expect(screen.getByTestId('invalid').textContent).toBe('false');
+    MachineRegistry.unregisterMachine('inv-init');
+  });
+
+  it('remains false when a good-quality value arrives', async () => {
+    const mock = new MockCommLayer();
+    render(
+      <MachineProvider id="inv-good" machine={mock}>
+        <InvalidDisplay />
+      </MachineProvider>,
+    );
+
+    await act(async () => {
+      mock.setVariableValue('Motor.Speed', 42);
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('invalid').textContent).toBe('false'),
+    );
+    MachineRegistry.unregisterMachine('inv-good');
+  });
+
+  it('sets invalid true when subscription delivers bad quality', async () => {
+    const mock = new MockCommLayer();
+    render(
+      <MachineProvider id="inv-bad-qual" machine={mock}>
+        <InvalidDisplay />
+      </MachineProvider>,
+    );
+
+    // Establish the subscription by delivering an initial good value
+    await act(async () => {
+      mock.setVariableValue('Motor.Speed', 42);
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId('invalid').textContent).toBe('false'),
+    );
+
+    // Now fire a bad-quality event
+    await act(async () => {
+      mock.fireSubscriptionEvent('Motor.Speed', { value: 0, quality: 'bad' });
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('invalid').textContent).toBe('true'),
+    );
+    MachineRegistry.unregisterMachine('inv-bad-qual');
+  });
+
+  it('sets invalid true when subscription delivers null value', async () => {
+    const mock = new MockCommLayer();
+    render(
+      <MachineProvider id="inv-null-val" machine={mock}>
+        <InvalidDisplay />
+      </MachineProvider>,
+    );
+
+    // Establish the subscription by delivering an initial good value
+    await act(async () => {
+      mock.setVariableValue('Motor.Speed', 42);
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId('invalid').textContent).toBe('false'),
+    );
+
+    // Now fire a null-value event
+    await act(async () => {
+      mock.fireSubscriptionEvent('Motor.Speed', { value: null });
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('invalid').textContent).toBe('true'),
+    );
+    MachineRegistry.unregisterMachine('inv-null-val');
+  });
+
+  it('clears invalid when a subsequent good value arrives', async () => {
+    const mock = new MockCommLayer();
+    render(
+      <MachineProvider id="inv-recover" machine={mock}>
+        <InvalidDisplay />
+      </MachineProvider>,
+    );
+
+    // Establish the subscription and put it into an invalid state
+    await act(async () => {
+      mock.setVariableValue('Motor.Speed', 42);
+    });
+    await act(async () => {
+      mock.fireSubscriptionEvent('Motor.Speed', { value: null });
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId('invalid').textContent).toBe('true'),
+    );
+
+    // Good value arrives — invalid should clear
+    await act(async () => {
+      mock.setVariableValue('Motor.Speed', 100);
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId('invalid').textContent).toBe('false'),
+    );
+    MachineRegistry.unregisterMachine('inv-recover');
+  });
+
+  it('sets invalid true when write fails with variable not found', async () => {
+    const mock = new MockCommLayer();
+    vi.spyOn(mock, 'writeVariable').mockRejectedValue(new Error('Variable not found on server'));
+
+    render(
+      <MachineProvider id="inv-write-notfound" machine={mock}>
+        <InvalidDisplay />
+      </MachineProvider>,
+    );
+
+    await act(async () => {
+      screen.getByText('set').click();
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('invalid').textContent).toBe('true'),
+    );
+    MachineRegistry.unregisterMachine('inv-write-notfound');
+  });
+
+  it('does NOT set invalid when write fails for other reasons', async () => {
+    const mock = new MockCommLayer();
+    vi.spyOn(mock, 'writeVariable').mockRejectedValue(new Error('permission denied'));
+
+    render(
+      <MachineProvider id="inv-write-perm" machine={mock}>
+        <InvalidDisplay />
+      </MachineProvider>,
+    );
+
+    await act(async () => {
+      screen.getByText('set').click();
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('error').textContent).toBe('permission denied'),
+    );
+    expect(screen.getByTestId('invalid').textContent).toBe('false');
+    MachineRegistry.unregisterMachine('inv-write-perm');
+  });
+});

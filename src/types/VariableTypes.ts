@@ -31,6 +31,8 @@ export interface VariableMeta {
   quality: VariableQuality | null;
   loading: boolean;
   error: Error | null;
+  /** True when the variable is confirmed invalid — bad quality from subscription, null value from subscription, or variable-not-found on write. Resets to false when a valid subscription event arrives. */
+  invalid: boolean;
 }
 
 export interface VariableConfig<T = unknown> {
