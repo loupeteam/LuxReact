@@ -235,6 +235,51 @@ describe('SubscriptionManager', () => {
   });
 
   // -----------------------------------------------------------------------
+  // Stale cache bug — always-mode parent fires while no children subscribed
+  // -----------------------------------------------------------------------
+  describe('always parent stale cache regression', () => {
+    it('delivers fresh parent-derived value to child that mounts after parent has already fired', async () => {
+      sm.registerParent('Motor', 'always');
+      await flush();
+
+      // Parent fires before any child is ever desired
+      mock.setVariableValue('Motor', { Speed: 42 });
+
+      // Child mounts — must receive 42 immediately, not stay in loading state
+      const cb = vi.fn();
+      sm.addDesired('Motor.Speed', cb);
+      expect(cb).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'Motor.Speed', value: 42 }),
+      );
+    });
+
+    it('delivers fresh parent value to child that remounts after parent fired while child was away', async () => {
+      sm.registerParent('Motor', 'always');
+      const cb1 = vi.fn();
+      sm.addDesired('Motor.Speed', cb1);
+      await flush();
+
+      mock.setVariableValue('Motor', { Speed: 1 });
+      expect(cb1).toHaveBeenCalledWith(expect.objectContaining({ value: 1 }));
+
+      // Child unmounts — parent stays subscribed (always mode)
+      sm.removeDesired('Motor.Speed', cb1);
+      await flush();
+      expect(mock.getSubscribedPaths()).toContain('Motor');
+
+      // Parent fires again while no child is subscribed
+      mock.setVariableValue('Motor', { Speed: 99 });
+
+      // Child remounts — must get 99, not the stale 1
+      const cb2 = vi.fn();
+      sm.addDesired('Motor.Speed', cb2);
+      expect(cb2).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'Motor.Speed', value: 99 }),
+      );
+    });
+  });
+
+  // -----------------------------------------------------------------------
   // destroy
   // -----------------------------------------------------------------------
   describe('destroy', () => {

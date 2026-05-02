@@ -69,8 +69,32 @@ export class SubscriptionManager {
       this._pathOptions.set(path, { ...existing, ...options });
     }
 
-    // Deliver cached value immediately
-    const cached = this._valueCache.get(path);
+    // Deliver cached value immediately.
+    // Prefer a fresh value derived from a registered parent's cache over a
+    // potentially-stale direct child-path cache entry (the child cache can lag
+    // when the parent keeps firing while no children are subscribed).
+    let cached: VariableChangeEvent | undefined;
+    let bestParentPath: string | null = null;
+    for (const [parentPath] of this._registeredParents) {
+      if (ParentOptimizer.isChildOf(path, parentPath)) {
+        if (bestParentPath === null || parentPath.length > bestParentPath.length) {
+          bestParentPath = parentPath;
+        }
+      }
+    }
+    if (bestParentPath !== null) {
+      const parentCached = this._valueCache.get(bestParentPath);
+      if (parentCached !== undefined) {
+        const childValue = ParentOptimizer.navigatePath(parentCached.value, path, bestParentPath);
+        if (childValue !== undefined) {
+          cached = { path, value: childValue, timestamp: parentCached.timestamp, quality: parentCached.quality };
+          this._valueCache.set(path, cached);
+        }
+      }
+    }
+    if (cached === undefined) {
+      cached = this._valueCache.get(path);
+    }
     if (cached !== undefined) {
       callback(cached);
     }
@@ -237,11 +261,14 @@ export class SubscriptionManager {
   }
 
   private _handleEvent(event: VariableChangeEvent): void {
+    // Always cache the latest value so that new subscribers (including child paths
+    // under an always-mode parent) can receive it as an initial delivery even when
+    // there were no active subscribers at the time this event arrived.
+    this._valueCache.set(event.path, { ...event });
+
     // 1. Deliver directly to exact-path subscribers
     const directCbs = this._callbacks.get(event.path);
     if (directCbs) {
-      const cached: VariableChangeEvent = { ...event };
-      this._valueCache.set(event.path, cached);
       for (const cb of directCbs) {
         cb(event);
       }
