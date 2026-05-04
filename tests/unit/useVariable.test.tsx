@@ -138,6 +138,54 @@ describe('useVariable write failure', () => {
     );
     MachineRegistry.unregisterMachine('v-fail-both');
   });
+
+  it('optimistic: reads actual value after a successful write when PLC overrides (deadband regression)', async () => {
+    // Simulates: PLC receives write of `true`, immediately resets to `false` within
+    // one OPC UA sampling window. The subscription sees no value change and fires
+    // no notification. Without a read-back on the success path, the UI would be
+    // stuck showing the stale optimistic value (`true`).
+    const mock = new MockCommLayer();
+    mock.setVariableValue('Toggle', false);
+
+    // Spy on readVariable — MockCommLayer will return the current stored value (false)
+    const readSpy = vi.spyOn(mock, 'readVariable');
+
+    function ToggleDisplay() {
+      const [value, setValue] = useVariable<boolean>('Toggle', { defaultValue: false, optimistic: true });
+      return (
+        <div>
+          <span data-testid="value">{String(value ?? false)}</span>
+          <button onClick={() => void setValue(true)}>toggle</button>
+        </div>
+      );
+    }
+
+    render(
+      <MachineProvider id="v-plc-reset" machine={mock}>
+        <ToggleDisplay />
+      </MachineProvider>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('value').textContent).toBe('false'),
+    );
+
+    // Click — optimistic update fires immediately, write resolves with no subscription event
+    // (PLC reset so fast that OPC UA deadband suppressed the notification)
+    await act(async () => {
+      screen.getByText('toggle').click();
+    });
+
+    // Should have read back the actual PLC value after the successful write
+    expect(readSpy).toHaveBeenCalledWith('Toggle');
+
+    // UI should reflect PLC's actual value (false), not the stale optimistic (true)
+    await waitFor(() =>
+      expect(screen.getByTestId('value').textContent).toBe('false'),
+    );
+
+    MachineRegistry.unregisterMachine('v-plc-reset');
+  });
 });
 
 describe('useVariable', () => {
@@ -195,6 +243,8 @@ describe('useVariable', () => {
     const mock = new MockCommLayer();
     // Give an initial value so loading is false
     mock.setVariableValue('Motor.Speed', 100);
+    // Simulate PLC accepting the write — read-back returns the written value
+    vi.spyOn(mock, 'readVariable').mockResolvedValue(9999);
 
     render(
       <MachineProvider id="v-optim" machine={mock}>
@@ -211,7 +261,7 @@ describe('useVariable', () => {
       screen.getByText('set').click();
     });
 
-    // Optimistic update should show 9999 immediately
+    // After write + read-back, value should be what the PLC confirmed (9999)
     expect(screen.getByTestId('value').textContent).toBe('9999');
     MachineRegistry.unregisterMachine('v-optim');
   });

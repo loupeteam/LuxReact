@@ -96,6 +96,20 @@ export function useVariable<T = unknown>(
 
       try {
         await context.commLayer.writeVariable(resolvedPath, newValue);
+        // Read back the actual PLC value after a successful optimistic write.
+        // This handles the OPC UA deadband / sampling-interval case where the PLC
+        // overrides the written value so fast that the subscription sees no value
+        // change (e.g. false → write true → PLC resets false within one sample
+        // window) and therefore never fires a notification to correct the UI.
+        if (options?.optimistic) {
+          try {
+            const actual = await context.commLayer.readVariable(resolvedPath);
+            setValue(actual as T);
+          } catch {
+            // Read-back failed — leave the optimistic value until the next
+            // subscription event corrects it.
+          }
+        }
       } catch (err) {
         // Read the actual server value so the UI reflects the true PLC state
         // regardless of whether we were in optimistic mode or not.
