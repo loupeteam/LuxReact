@@ -28,6 +28,7 @@ export { useMachine } from './hooks/useMachine';
 export type { MachineControls } from './hooks/useMachine';
 export { useMomentary } from './hooks/useMomentary';
 export { useCurrentUser } from './hooks/useCurrentUser';
+export { useCurrentUserRoles } from './hooks/useCurrentUserRoles';
 export type { MomentaryResult, MomentaryHandlers, MomentaryConfig } from './hooks/useMomentary';
 
 // Mock (included in main bundle for test usage in consumer apps)

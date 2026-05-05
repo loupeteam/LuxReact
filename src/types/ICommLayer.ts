@@ -47,5 +47,12 @@ export interface ICommLayer {
 	changeUser?(username: string, password: string): Promise<void>;
 	writeMany?(values: Record<string, unknown>): Promise<void>;
 	getCurrentUser?(): string | undefined;
+	/**
+	 * Roles assigned to the currently authenticated user, as returned by
+	 * the underlying server (OPC-UA mapp Connect populates this on
+	 * authenticate / changeUser). Returns undefined when the comm layer
+	 * does not support roles.
+	 */
+	getCurrentUserRoles?(): string[] | undefined;
 	onUserChanged?(handler: (username: string | undefined) => void): UnsubscribeFn | void;
 }

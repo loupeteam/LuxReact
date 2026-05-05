@@ -32,6 +32,7 @@ export class MockCommLayer implements ICommLayer {
   private _writtenValues = new Map<string, unknown>();
   private _connectionStateHandlers = new Set<ConnectionStateHandler>();
   private _currentUser: string | undefined = undefined;
+  private _currentUserRoles: string[] | undefined = undefined;
   private _userChangeHandlers = new Set<(username: string | undefined) => void>();
 
   // --- ICommLayer implementation ---
@@ -99,6 +100,10 @@ export class MockCommLayer implements ICommLayer {
     return this._currentUser;
   }
 
+  getCurrentUserRoles(): string[] | undefined {
+    return this._currentUserRoles;
+  }
+
   onUserChanged(handler: (username: string | undefined) => void): UnsubscribeFn {
     this._userChangeHandlers.add(handler);
     return () => this._userChangeHandlers.delete(handler);
@@ -158,9 +163,11 @@ export class MockCommLayer implements ICommLayer {
 
   /**
    * Set the mock current user (simulates a logged-in user). Fires onUserChanged handlers.
+   * Optionally accepts a roles array to simulate the OPC-UA role response.
    */
-  setCurrentUser(username: string | undefined): void {
+  setCurrentUser(username: string | undefined, roles?: string[]): void {
     this._currentUser = username;
+    this._currentUserRoles = roles ?? (username ? [] : undefined);
     for (const handler of this._userChangeHandlers) handler(username);
   }
 

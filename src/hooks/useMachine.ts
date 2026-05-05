@@ -12,6 +12,7 @@ export interface MachineControls {
   changeUser?: (username: string, password: string) => Promise<void>;
   writeMany?: (values: Record<string, unknown>) => Promise<void>;
   getCurrentUser?: () => string | undefined;
+  getCurrentUserRoles?: () => string[] | undefined;
 }
 
 /**
@@ -55,6 +56,10 @@ export function useMachine(machineId?: string): MachineControls {
 
   if (commLayer.getCurrentUser) {
     controls.getCurrentUser = () => commLayer.getCurrentUser!();
+  }
+
+  if (commLayer.getCurrentUserRoles) {
+    controls.getCurrentUserRoles = () => commLayer.getCurrentUserRoles!();
   }
 
   return controls;
