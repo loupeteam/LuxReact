@@ -6,4 +6,3 @@ import { connectionConfig } from './config';
  * MachineProvider calls connect() on mount and disconnect() on unmount.
  */
 export const machine = new OpcuaMachine(connectionConfig);
-machine.setDefaultNamespace(`ns=${connectionConfig.namespace}`);
